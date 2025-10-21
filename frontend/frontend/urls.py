@@ -19,10 +19,13 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    #Página global
-    path('', include('core.urls')),
 
     #Gestión de recursos
     path('recursos/', include('recursos.urls')),
+
+    #Gestión de clientes
+    path('clientes/', include('clientes.urls')),
+
+    #Página global - RUTA GENERAL DE ULTIMO RICHARD PORFAVOR
+    path('', include('core.urls')),
 ]

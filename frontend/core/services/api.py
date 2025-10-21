@@ -5,8 +5,13 @@ BACKEND_URL = "http://localhost:5000/api"
 
 #RECURSOS
 def obtener_recursos():
-    r = requests.get(f"{BACKEND_URL}/recursos")
-    return r.json()
+    try:
+        r = requests.get(f"{BACKEND_URL}/recursos")
+        r.raise_for_status()  # lanza excepción si hay error 4xx/5xx
+        return r.json()
+    except Exception as e:
+        print(f"Error al obtener recursos: {e}")
+        return []
 
 def crear_recurso(nombre, abreviatura, metrica, tipo, valor_x_hora):
     data = {
@@ -23,23 +28,24 @@ def eliminar_recurso(id_recurso):
     r = requests.delete(f"{BACKEND_URL}/recursos/{id_recurso}")
     return r.json()
 
-
 #CLIENTES
 def obtener_clientes():
     r = requests.get(f"{BACKEND_URL}/clientes")
     return r.json()
 
-def crear_cliente(nit, nombre, usuario, clave, direccion, correo):
-    data = {
-        "nit": nit,
+def crear_cliente(nombre, nit, direccion, correo):
+    payload = {
         "nombre": nombre,
-        "usuario": usuario,
-        "clave": clave,
+        "nit": nit,
         "direccion": direccion,
         "correo": correo
     }
-    r = requests.post(f"{BACKEND_URL}/clientes", json=data)
-    return r.json()
+    r = requests.post(f"{BACKEND_URL}/clientes", json=payload)
+    try:
+        return r.json()
+    except ValueError:
+        print("Error decodificando JSON:", r.text)
+        return {"error": "Respuesta inválida del servidor Flask"}
 
 #INSTANCIAS
 def obtener_instancias():
