@@ -7,9 +7,23 @@ app = Flask(__name__)
 CORS(app) #Peticiones del frontend
 
 #base de datos simulada
-recursos = []
-clientes = []
-instancias = []
+recursos = [
+    {"id": 1, "nombre": "Servidor A", "abreviatura": "SRV-A", "tipo": "VM", "metrica": "8 GB RAM", "valor_x_hora": 5.5},
+    {"id": 2, "nombre": "Base de Datos SQL", "abreviatura": "DB01", "tipo": "DB", "metrica": "50 GB", "valor_x_hora": 3.75},
+    {"id": 3, "nombre": "Almacenamiento Cloud", "abreviatura": "STO", "tipo": "Storage", "metrica": "100 GB", "valor_x_hora": 1.25}
+]
+
+clientes = [
+    {"id": 1, "nombre": "Juan Pérez", "nit": "1234567-8", "direccion": "Zona 1", "correo": "juan@example.com"},
+    {"id": 2, "nombre": "María López", "nit": "9876543-2", "direccion": "Zona 10", "correo": "maria@example.com"},
+    {"id": 3, "nombre": "Carlos Ramírez", "nit": "4567891-0", "direccion": "Antigua Guatemala", "correo": "carlos@example.com"}
+]
+
+instancias = [
+    {"id": 1, "cliente_id": 1, "recurso_id": 1, "horas": 10, "estado": "Vigente", "costo_total": 10 * 5.5},
+    {"id": 2, "cliente_id": 2, "recurso_id": 3, "horas": 20, "estado": "Cancelada", "costo_total": 20 * 1.25},
+    {"id": 3, "cliente_id": 3, "recurso_id": 2, "horas": 5, "estado": "Vigente", "costo_total": 5 * 3.75}
+]
 
 #----------------------------------------------FUNCIONES AUXILIARES
 #buscar por id
@@ -129,6 +143,15 @@ def crear_instancia():
     nueva = request.json
     nueva["id"] = len(instancias) + 1
     nueva["estado"] = "Vigente"
+
+    # Buscar recurso para calcular costo total
+    recurso = buscar_por_id(recursos, int(nueva["recurso_id"]))
+    horas = float(nueva.get("horas", 0))
+    if recurso:
+        nueva["costo_total"] = horas * float(recurso["valor_x_hora"])
+    else:
+        nueva["costo_total"] = 0
+
     instancias.append(nueva)
     return jsonify(nueva), 201
 

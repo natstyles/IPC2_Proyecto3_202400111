@@ -5,9 +5,9 @@ from core.services import api
 #Listar recursos
 
 def listar_recursos(request):
-    print("🟢 Entró a listar_recursos Django")
+    print("Entró a listar_recursos Django")
     recursos = api.obtener_recursos()
-    print("📦 Recursos recibidos desde Flask:", recursos)
+    print("Recursos recibidos desde Flask:", recursos)
     return render(request, "recursos/listar.html", {"recursos": recursos})
 
 #Crear recurso nuevo

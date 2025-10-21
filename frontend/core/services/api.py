@@ -62,16 +62,17 @@ def obtener_instancias():
     r = requests.get(f"{BACKEND_URL}/instancias")
     return r.json()
 
-def crear_instancia(id_config, nombre):
-    data = {
-        "id_configuracion": id_config,
-        "nombre": nombre
+def crear_instancia(cliente_id, recurso_id, horas):
+    payload = {
+        "cliente_id": cliente_id,
+        "recurso_id": recurso_id,
+        "horas": horas
     }
-    r = requests.post(f"{BACKEND_URL}/instancias", json=data)
+    r = requests.post(f"{BACKEND_URL}/instancias", json=payload)
     return r.json()
 
-def cancelar_instancia(id_instancia):
-    r = requests.put(f"{BACKEND_URL}/instancias/{id_instancia}/cancelar")
+def cancelar_instancia(id):
+    r = requests.put(f"{BACKEND_URL}/instancias/{id}/cancelar")
     return r.json()
 
 #SISTEMA

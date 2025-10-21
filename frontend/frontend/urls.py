@@ -26,6 +26,9 @@ urlpatterns = [
     #Gestión de clientes
     path('clientes/', include('clientes.urls')),
 
+    #Gestión de instancias
+    path('instancias/', include('instancias.urls')),
+
     #Página global - RUTA GENERAL DE ULTIMO RICHARD PORFAVOR
     path('', include('core.urls')),
 ]

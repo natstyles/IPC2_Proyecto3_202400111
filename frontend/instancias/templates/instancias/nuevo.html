@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Nueva Instancia</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <label>Cliente:</label>
+    <select name="cliente_id">
+        {% for c in clientes %}
+        <option value="{{ c.id }}">{{ c.nombre }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Recurso:</label>
+    <select name="recurso_id">
+        {% for r in recursos %}
+        <option value="{{ r.id }}">{{ r.nombre }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Horas de uso:</label>
+    <input type="number" step="0.01" name="horas"><br>
+
+    <button type="submit">Crear Instancia</button>
+</form>
+{% endblock %}
