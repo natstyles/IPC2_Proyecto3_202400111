@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Listado de Recursos</title>
-</head>
-<body>
-    <h1>Recursos Disponibles</h1>
+{% extends "base.html" %}
 
-    <a href="{% url 'crear_recurso' %}">Nuevo Recurso</a>
+{% block title %}Recursos{% endblock %}
+
+{% block content %}
+<h2>Listado de Recursos</h2>
+
+<a href="{% url 'crear_recurso' %}">Nuevo Recurso</a>
 
     <table border="1" cellpadding="6">
         <tr>
@@ -33,5 +31,4 @@
         </tr>
         {% endfor %}
     </table>
-</body>
-</html>
+{% endblock %}

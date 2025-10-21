@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Nuevo Recurso</title>
-</head>
-<body>
-    <h1>Crear Nuevo Recurso</h1>
+{% extends "base.html" %}
+
+{% block title %}Nuevo Recurso{% endblock %}
+
+{% block content %}
+<h2>Crear Nuevo Recurso</h2>
     <form method="POST">
         {% csrf_token %}
         <label>Nombre:</label><br>
@@ -25,5 +24,4 @@
 
         <button type="submit">Guardar</button>
     </form>
-</body>
-</html>
+{% endblock %}
