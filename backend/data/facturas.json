@@ -3,13 +3,13 @@
         "cliente_id": 1,
         "cliente": "Juan Pérez",
         "correo": "juan@example.com",
-        "total": 82.5,
+        "total": 137.5,
         "detalle": [
             {
                 "recurso": "Servidor A",
-                "horas": 15.0,
+                "horas": 25.0,
                 "costo_hora": 5.5,
-                "subtotal": 82.5
+                "subtotal": 137.5
             }
         ]
     },

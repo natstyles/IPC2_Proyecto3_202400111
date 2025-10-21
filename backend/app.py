@@ -364,8 +364,31 @@ def generar_facturas():
             }
             facturas.append(factura)
 
-    guardar_datos(FACTURAS_FILE, facturas)
+    guardar_datos(CONSUMOS_FILE.replace("consumos", "facturas"), facturas)
+    guardar_facturas_xml(facturas)
     return jsonify({"message": f"Se generaron {len(facturas)} facturas", "facturas": facturas})
+
+def guardar_facturas_xml(facturas):
+    root = ET.Element("Facturas")
+
+    for factura in facturas:
+        f_elem = ET.SubElement(root, "Factura")
+        ET.SubElement(f_elem, "Cliente").text = factura["cliente"]
+        ET.SubElement(f_elem, "Correo").text = factura["correo"]
+        ET.SubElement(f_elem, "Total").text = str(factura["total"])
+
+        detalle_elem = ET.SubElement(f_elem, "Detalle")
+        for item in factura["detalle"]:
+            item_elem = ET.SubElement(detalle_elem, "Item")
+            ET.SubElement(item_elem, "Recurso").text = item["recurso"]
+            ET.SubElement(item_elem, "Horas").text = str(item["horas"])
+            ET.SubElement(item_elem, "CostoHora").text = str(item["costo_hora"])
+            ET.SubElement(item_elem, "Subtotal").text = str(item["subtotal"])
+
+    tree = ET.ElementTree(root)
+    ruta_xml = os.path.join(DATA_DIR, "facturas.xml")
+    tree.write(ruta_xml, encoding="utf-8", xml_declaration=True)
+    print(f"Facturas exportadas correctamente a {ruta_xml}")
 
 #SISTEMA
 @app.route('/api/sistema/inicializar', methods=['POST'])

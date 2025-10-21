@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Facturas><Factura><Cliente>Juan Pérez</Cliente><Correo>juan@example.com</Correo><Total>137.5</Total><Detalle><Item><Recurso>Servidor A</Recurso><Horas>25.0</Horas><CostoHora>5.5</CostoHora><Subtotal>137.5</Subtotal></Item></Detalle></Factura><Factura><Cliente>Carlos Ramírez</Cliente><Correo>carlos@example.com</Correo><Total>18.75</Total><Detalle><Item><Recurso>Base de Datos SQL</Recurso><Horas>5</Horas><CostoHora>3.75</CostoHora><Subtotal>18.75</Subtotal></Item></Detalle></Factura></Facturas>
