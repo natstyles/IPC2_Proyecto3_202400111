@@ -6,4 +6,5 @@ urlpatterns = [
     path('recursos/', views.listar_recursos, name='listar_recursos'),
     path('sistema/inicializar/', views.reiniciar_sistema, name='reiniciar_sistema'),
     path('configuracion/subir/', views.subir_configuracion, name='subir_configuracion'),
+    path('subir_configuracion/', views.cargar_configuracion, name='cargar_configuracion'),
 ]

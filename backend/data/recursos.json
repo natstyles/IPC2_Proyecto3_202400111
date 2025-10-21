@@ -1,10 +1,18 @@
 [
     {
+        "id": 1,
         "nombre": "Servidor B",
-        "abreviatura": "ASAS",
-        "metrica": "1515",
-        "tipo": "1521212",
-        "valor_x_hora": 2.0,
-        "id": 4
+        "abreviatura": "SRV-B",
+        "tipo": "VM",
+        "metrica": "16 GB RAM",
+        "valor_x_hora": 7.5
+    },
+    {
+        "id": 2,
+        "nombre": "Storage Premium",
+        "abreviatura": "STO-P",
+        "tipo": "Storage",
+        "metrica": "1 TB",
+        "valor_x_hora": 2.5
     }
 ]

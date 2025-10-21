@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Subir Configuración XML</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label>Tipo:</label>
+    <select name="tipo" required>
+        <option value="clientes">Clientes</option>
+        <option value="recursos">Recursos</option>
+    </select>
+    <br><br>
+    <label>Archivo XML:</label>
+    <input type="file" name="archivo" accept=".xml" required>
+    <br><br>
+    <button type="submit">Cargar</button>
+</form>
+
+{% if messages %}
+    <div style="margin-top:20px;">
+        {% for message in messages %}
+            <p class="alert {{ message.tags }}">{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
