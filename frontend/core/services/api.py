@@ -46,6 +46,16 @@ def crear_cliente(nombre, nit, direccion, correo):
     except ValueError:
         print("Error decodificando JSON:", r.text)
         return {"error": "Respuesta inválida del servidor Flask"}
+    
+def eliminar_cliente(cliente_id):
+    url = f"{BACKEND_URL}/clientes/{cliente_id}"
+    r = requests.delete(url)
+    
+    # Si Flask devuelve JSON, lo retornamos, si no, devolvemos un mensaje genérico
+    try:
+        return r.json()
+    except ValueError:
+        return {"message": f"Cliente {cliente_id} eliminado"}
 
 #INSTANCIAS
 def obtener_instancias():
