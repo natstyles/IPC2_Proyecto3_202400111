@@ -16,6 +16,8 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 CLIENTES_FILE = os.path.join(DATA_DIR, "clientes.json")
 RECURSOS_FILE = os.path.join(DATA_DIR, "recursos.json")
 INSTANCIAS_FILE = os.path.join(DATA_DIR, "instancias.json")
+CONSUMOS_FILE = os.path.join(DATA_DIR, "consumos.json")
+FACTURAS_FILE = os.path.join(DATA_DIR, "facturas.json")
 
 def cargar_datos(ruta, datos_defecto):
     if not os.path.exists(DATA_DIR):
@@ -29,11 +31,9 @@ def cargar_datos(ruta, datos_defecto):
     except json.JSONDecodeError:
         return datos_defecto
 
-
 def guardar_datos(ruta, datos):
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(datos, f, indent=4, ensure_ascii=False)
-
 
 def buscar_por_id(lista, id):
     for item in lista:
@@ -328,6 +328,44 @@ def cargar_consumos():
         "message": f"Se cargaron {len(nuevos_consumos)} consumos",
         "consumos": nuevos_consumos
     })
+
+#----------------------------------------------ENDPOINTS FACTURACIÓN
+@app.route('/api/facturar', methods=['POST'])
+def generar_facturas():
+    clientes = cargar_datos(CLIENTES_FILE, [])
+    instancias = cargar_datos(INSTANCIAS_FILE, [])
+    recursos = cargar_datos(RECURSOS_FILE, [])
+    facturas = []
+
+    for cliente in clientes:
+        total_cliente = 0
+        detalle = []
+
+        for instancia in instancias:
+            if instancia["cliente_id"] == cliente["id"] and instancia["estado"] == "Vigente":
+                recurso = next((r for r in recursos if r["id"] == instancia["recurso_id"]), None)
+                if recurso:
+                    subtotal = instancia["horas"] * recurso["valor_x_hora"]
+                    detalle.append({
+                        "recurso": recurso["nombre"],
+                        "horas": instancia["horas"],
+                        "costo_hora": recurso["valor_x_hora"],
+                        "subtotal": subtotal
+                    })
+                    total_cliente += subtotal
+
+        if total_cliente > 0:
+            factura = {
+                "cliente_id": cliente["id"],
+                "cliente": cliente["nombre"],
+                "correo": cliente["correo"],
+                "total": round(total_cliente, 2),
+                "detalle": detalle
+            }
+            facturas.append(factura)
+
+    guardar_datos(FACTURAS_FILE, facturas)
+    return jsonify({"message": f"Se generaron {len(facturas)} facturas", "facturas": facturas})
 
 #SISTEMA
 @app.route('/api/sistema/inicializar', methods=['POST'])

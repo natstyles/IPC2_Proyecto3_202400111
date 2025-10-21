@@ -1,0 +1,30 @@
+[
+    {
+        "cliente_id": 1,
+        "cliente": "Juan Pérez",
+        "correo": "juan@example.com",
+        "total": 82.5,
+        "detalle": [
+            {
+                "recurso": "Servidor A",
+                "horas": 15.0,
+                "costo_hora": 5.5,
+                "subtotal": 82.5
+            }
+        ]
+    },
+    {
+        "cliente_id": 3,
+        "cliente": "Carlos Ramírez",
+        "correo": "carlos@example.com",
+        "total": 18.75,
+        "detalle": [
+            {
+                "recurso": "Base de Datos SQL",
+                "horas": 5,
+                "costo_hora": 3.75,
+                "subtotal": 18.75
+            }
+        ]
+    }
+]
