@@ -24,7 +24,7 @@
         <td>{{ r.abreviatura }}</td>
         <td>{{ r.metrica }}</td>
         <td>{{ r.tipo }}</td>
-        <td>{{ r.valor_x_hora }}</td>
+        <td>Q {{ r.valor_x_hora|floatformat:2 }}</td>
         <td>
             <a href="{% url 'eliminar_recurso' r.id %}">Eliminar</a>
         </td>

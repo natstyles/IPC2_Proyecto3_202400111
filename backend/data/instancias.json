@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "cliente_id": 1,
+        "recurso_id": 1,
+        "horas": 10,
+        "estado": "Vigente",
+        "costo_total": 55.0
+    },
+    {
+        "id": 2,
+        "cliente_id": 2,
+        "recurso_id": 3,
+        "horas": 20,
+        "estado": "Cancelada",
+        "costo_total": 25.0
+    },
+    {
+        "id": 3,
+        "cliente_id": 3,
+        "recurso_id": 2,
+        "horas": 5,
+        "estado": "Vigente",
+        "costo_total": 18.75
+    }
+]

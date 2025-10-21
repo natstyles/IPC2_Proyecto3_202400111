@@ -1,0 +1,10 @@
+[
+    {
+        "nombre": "Servidor B",
+        "abreviatura": "ASAS",
+        "metrica": "1515",
+        "tipo": "1521212",
+        "valor_x_hora": 2.0,
+        "id": 4
+    }
+]

@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "nit": "1234567-8",
+        "direccion": "Zona 1",
+        "correo": "juan@example.com"
+    },
+    {
+        "id": 2,
+        "nombre": "María López",
+        "nit": "9876543-2",
+        "direccion": "Zona 10",
+        "correo": "maria@example.com"
+    },
+    {
+        "id": 3,
+        "nombre": "Carlos Ramírez",
+        "nit": "4567891-0",
+        "direccion": "Antigua Guatemala",
+        "correo": "carlos@example.com"
+    }
+]

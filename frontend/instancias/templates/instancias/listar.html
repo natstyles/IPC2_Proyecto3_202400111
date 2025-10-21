@@ -20,7 +20,7 @@
         <td>{{ i.cliente_nombre }}</td>
         <td>{{ i.recurso_nombre }}</td>
         <td>{{ i.horas }}</td>
-        <td>Q{{ i.costo_total|floatformat:2 }}</td>
+        <td>Q {{ i.costo_total|floatformat:2 }}</td>
         <td>{{ i.estado }}</td>
         <td>
             {% if i.estado == "Vigente" %}
