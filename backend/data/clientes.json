@@ -19,5 +19,19 @@
         "nit": "4567891-0",
         "direccion": "Antigua Guatemala",
         "correo": "carlos@example.com"
+    },
+    {
+        "id": 4,
+        "nombre": "Pedro Castillo",
+        "nit": "1234567-9",
+        "direccion": "Zona 5",
+        "correo": "pedro@example.com"
+    },
+    {
+        "id": 5,
+        "nombre": "Lucía Torres",
+        "nit": "7654321-0",
+        "direccion": "Zona 7",
+        "correo": "lucia@example.com"
     }
 ]

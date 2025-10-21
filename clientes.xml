@@ -1,0 +1,14 @@
+<clientes>
+    <cliente>
+        <nombre>Pedro Castillo</nombre>
+        <nit>1234567-9</nit>
+        <direccion>Zona 5</direccion>
+        <correo>pedro@example.com</correo>
+    </cliente>
+    <cliente>
+        <nombre>Lucía Torres</nombre>
+        <nit>7654321-0</nit>
+        <direccion>Zona 7</direccion>
+        <correo>lucia@example.com</correo>
+    </cliente>
+</clientes>

@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import secrets
@@ -85,6 +87,76 @@ def sugerir_usuario_desde_correo(correo: str, clientes_existentes: list) -> str:
         sufijo += 1
         usuario = f"{base}{sufijo}"
     return usuario
+
+#----------------------------------------------CARGA DE ARCHIVOS XML
+@app.route('/api/cargar_xml', methods=['POST'])
+def cargar_xml():
+    #Verificar que se haya enviado el archivo
+    if 'archivo' not in request.files:
+        return jsonify({"error": "No se envió ningún archivo XML"}), 400
+
+    archivo = request.files['archivo']
+    tipo = request.form.get('tipo') #clientes o recursos
+
+    if not archivo or archivo.filename == '':
+        return jsonify({"error": "Archivo inválido"}), 400
+
+    if tipo not in ["clientes", "recursos"]:
+        return jsonify({"error": "Debe especificar un tipo válido (clientes o recursos)"}), 400
+
+    #Guardar temporalmente
+    filename = secure_filename(archivo.filename)
+    temp_path = os.path.join(DATA_DIR, filename)
+    archivo.save(temp_path)
+
+    try:
+        tree = ET.parse(temp_path)
+        root = tree.getroot()
+    except Exception as e:
+        return jsonify({"error": f"Error al procesar XML: {str(e)}"}), 400
+
+    nuevos = []
+
+    #----------------------------------------------CARGA DE CLIENTES
+    if tipo == "clientes":
+        global clientes
+        for elem in root.findall("cliente"):
+            nuevo = {
+                "id": len(clientes) + len(nuevos) + 1,
+                "nombre": elem.findtext("nombre"),
+                "nit": elem.findtext("nit"),
+                "direccion": elem.findtext("direccion"),
+                "correo": elem.findtext("correo")
+            }
+            nuevos.append(nuevo)
+
+        clientes.extend(nuevos)
+        guardar_datos(CLIENTES_FILE, clientes)
+
+    #----------------------------------------------CARGA DE RECURSOS
+    elif tipo == "recursos":
+        global recursos
+        for elem in root.findall("recurso"):
+            nuevo = {
+                "id": len(recursos) + len(nuevos) + 1,
+                "nombre": elem.findtext("nombre"),
+                "abreviatura": elem.findtext("abreviatura"),
+                "tipo": elem.findtext("tipo"),
+                "metrica": elem.findtext("metrica"),
+                "valor_x_hora": float(elem.findtext("valor_x_hora"))
+            }
+            nuevos.append(nuevo)
+
+        recursos.extend(nuevos)
+        guardar_datos(RECURSOS_FILE, recursos)
+
+    #borramos archivo temporal
+    os.remove(temp_path)
+
+    return jsonify({
+        "message": f"Se cargaron {len(nuevos)} {tipo}",
+        "registros": nuevos
+    }), 201
 
 #----------------------------------------------ENDPOINTS RECURSOS
 @app.route('/api/recursos', methods=['GET'])
