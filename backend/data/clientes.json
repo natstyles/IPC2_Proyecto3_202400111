@@ -1,16 +1,23 @@
 [
     {
         "id": 1,
-        "nombre": "Pedro Castillo",
-        "nit": "1234567-9",
-        "direccion": "Zona 5",
-        "correo": "pedro@example.com"
+        "nombre": "Juan Pérez",
+        "nit": "1234567-8",
+        "direccion": "Zona 1",
+        "correo": "juan@example.com"
     },
     {
         "id": 2,
-        "nombre": "Lucía Torres",
-        "nit": "7654321-0",
-        "direccion": "Zona 7",
-        "correo": "lucia@example.com"
+        "nombre": "María López",
+        "nit": "9876543-2",
+        "direccion": "Zona 10",
+        "correo": "maria@example.com"
+    },
+    {
+        "id": 3,
+        "nombre": "Carlos Ramírez",
+        "nit": "4567891-0",
+        "direccion": "Antigua Guatemala",
+        "correo": "carlos@example.com"
     }
 ]

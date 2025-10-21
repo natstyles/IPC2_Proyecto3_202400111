@@ -5,6 +5,7 @@ from flask_cors import CORS
 import secrets
 import string
 import json, os
+from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
 CORS(app) #Peticiones del frontend
@@ -273,6 +274,60 @@ def cancelar_instancia(id):
         guardar_datos(INSTANCIAS_FILE, instancias)
         return jsonify(instancia)
     return jsonify({"error": "Instancia no encontrada"}), 404
+
+#----------------------------------------------ENDPOINTS CONSUMOS
+@app.route('/api/consumos', methods=['POST'])
+def cargar_consumos():
+    archivo = request.files.get('archivo')
+    if not archivo:
+        return jsonify({"error": "No se envió ningún archivo XML"}), 400
+
+    tree = ET.parse(archivo)
+    root = tree.getroot()
+
+    instancias = cargar_datos(INSTANCIAS_FILE, [])
+    recursos = cargar_datos(RECURSOS_FILE, [])
+    nuevos_consumos = []
+
+    print("=== DEBUG INICIO ===")
+    print("INSTANCIAS CARGADAS:", instancias)
+    print("RECURSOS CARGADOS:", recursos)
+
+    for consumo in root.findall(".//Consumo"):
+        id_instancia = int(consumo.find('idInstancia').text)
+        horas_uso = float(consumo.find('horasUso').text)
+        print(f"Procesando consumo -> Instancia: {id_instancia}, Horas: {horas_uso}")
+
+        encontrada = False
+        for instancia in instancias:
+            if instancia["id"] == id_instancia:
+                encontrada = True
+                print(f"✔ Instancia encontrada: {instancia}")
+
+                recurso_id = instancia.get("recurso_id")
+                recurso = next((r for r in recursos if r["id"] == recurso_id), None)
+                print(f"→ Recurso asociado: {recurso}")
+
+                costo_hora = recurso["valor_x_hora"] if recurso else 0
+                instancia["horas"] += horas_uso
+                instancia["costo_total"] = round(instancia["horas"] * costo_hora, 2)
+                nuevos_consumos.append({
+                    "idInstancia": id_instancia,
+                    "horasUso": horas_uso,
+                    "nuevoTotal": instancia["costo_total"]
+                })
+                break
+
+        if not encontrada:
+            print(f"⚠ No se encontró instancia con ID {id_instancia}")
+
+    print("=== DEBUG FIN ===")
+    guardar_datos(INSTANCIAS_FILE, instancias)
+    guardar_datos(RECURSOS_FILE, recursos)
+    return jsonify({
+        "message": f"Se cargaron {len(nuevos_consumos)} consumos",
+        "consumos": nuevos_consumos
+    })
 
 #SISTEMA
 @app.route('/api/sistema/inicializar', methods=['POST'])

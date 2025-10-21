@@ -1,18 +1,26 @@
 [
     {
         "id": 1,
-        "nombre": "Servidor B",
-        "abreviatura": "SRV-B",
+        "nombre": "Servidor A",
+        "abreviatura": "SRV-A",
         "tipo": "VM",
-        "metrica": "16 GB RAM",
-        "valor_x_hora": 7.5
+        "metrica": "8 GB RAM",
+        "valor_x_hora": 5.5
     },
     {
         "id": 2,
-        "nombre": "Storage Premium",
-        "abreviatura": "STO-P",
+        "nombre": "Base de Datos SQL",
+        "abreviatura": "DB01",
+        "tipo": "DB",
+        "metrica": "50 GB",
+        "valor_x_hora": 3.75
+    },
+    {
+        "id": 3,
+        "nombre": "Almacenamiento Cloud",
+        "abreviatura": "STO",
         "tipo": "Storage",
-        "metrica": "1 TB",
-        "valor_x_hora": 2.5
+        "metrica": "100 GB",
+        "valor_x_hora": 1.25
     }
 ]
