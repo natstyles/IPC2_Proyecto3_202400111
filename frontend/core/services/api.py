@@ -82,13 +82,24 @@ def inicializar_sistema():
 
 #XMLS
 def enviar_xml_configuracion(archivo):
-    """Envía un archivo XML de configuración al backend."""
     files = {'archivo': archivo}
     r = requests.post(f"{BACKEND_URL}/configuracion/cargar-xml", files=files)
     return r.json()
 
 def enviar_xml_consumos(archivo):
-    """Envía un archivo XML de consumos al backend."""
     files = {'archivo': archivo}
     r = requests.post(f"{BACKEND_URL}/consumos/cargar-xml", files=files)
     return r.json()
+
+#FACTURAS
+def obtener_facturas():
+    try:
+        response = requests.get(f"{BACKEND_URL}/facturas")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error al obtener facturas: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"Error de conexión con el backend: {e}")
+        return []

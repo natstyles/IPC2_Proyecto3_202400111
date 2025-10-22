@@ -11,7 +11,7 @@
     <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 250px;">
         <h3>Configuración</h3>
         <p>Sube archivos XML de configuración y consumo para inicializar el sistema.</p>
-        <a href="/configuracion/subir/">Ir a configuración</a>
+        <a href="{% url 'cargar_configuracion' %}">Ir a configuración</a>
     </div>
 
     <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 250px;">
@@ -30,6 +30,21 @@
         <h3>Instancias</h3>
         <p>Monitorea las instancias activas y sus consumos de recursos.</p>
         <a href="/instancias/">Ver instancias</a>
+    </div>
+
+    <div style="background: white; padding: 20px; border-radius: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15); width: 250px;">
+        <h3>Facturación</h3>
+        <p>Consulta las facturas generadas y descarga los reportes disponibles.</p>
+        <a href="/facturas/">Ir a facturas</a>
+    </div>
+
+    <div style="background: white; padding: 20px; border-radius: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15); width: 250px;">
+        <h3>Reportes</h3>
+        <p>Descarga los reportes en formato PDF o XML generados por el sistema.</p>
+        <a href="http://127.0.0.1:5000/api/facturas/pdf" target="_blank">Descargar PDF</a><br>
+        <a href="http://127.0.0.1:5000/api/facturas/xml" target="_blank">Descargar XML</a>
     </div>
 
 </div>

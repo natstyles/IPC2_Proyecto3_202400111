@@ -18,6 +18,6 @@ def crear_cliente(request):
 
     return render(request, "clientes/nuevo.html")
 
-def eliminar_cliente(request, id):
+def eliminar_cliente(id):
     api.eliminar_cliente(id)
     return redirect("listar_clientes")

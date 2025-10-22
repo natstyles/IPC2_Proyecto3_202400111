@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Facturas{% endblock %}
+{% block content %}
+<h2>Listado de Facturas</h2>
+
+<a href="{% url 'descargar_facturas' %}" class="btn">Descargar XML</a>
+
+<table border="1" cellspacing="0" cellpadding="8">
+    <tr>
+        <th>Cliente</th>
+        <th>Correo</th>
+        <th>Total</th>
+    </tr>
+    {% for factura in facturas %}
+    <tr>
+        <td>{{ factura.cliente }}</td>
+        <td>{{ factura.correo }}</td>
+        <td>Q {{ factura.total }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">No hay facturas registradas</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

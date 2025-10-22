@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'recursos',
     'clientes',
     'instancias',
+    'facturas',
     'core',
 ]
 

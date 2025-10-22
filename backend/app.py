@@ -1,11 +1,14 @@
 import xml.etree.ElementTree as ET
 from werkzeug.utils import secure_filename
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, Response
 from flask_cors import CORS
 import secrets
 import string
 import json, os
 from xml.etree import ElementTree as ET
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 
 app = Flask(__name__)
 CORS(app) #Peticiones del frontend
@@ -389,6 +392,107 @@ def guardar_facturas_xml(facturas):
     ruta_xml = os.path.join(DATA_DIR, "facturas.xml")
     tree.write(ruta_xml, encoding="utf-8", xml_declaration=True)
     print(f"Facturas exportadas correctamente a {ruta_xml}")
+
+@app.route('/api/facturas', methods=['GET'])
+def obtener_facturas():
+    ruta = os.path.join(DATA_DIR, "facturas.json")
+    if not os.path.exists(ruta):
+        return jsonify([])
+    try:
+        with open(ruta, "r", encoding="utf-8") as f:
+            facturas = json.load(f)
+            return jsonify(facturas)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#----------------------------------------------GENERACION DE FACTURAS EN PDF
+@app.route('/api/facturas/pdf', methods=['GET'])
+def descargar_facturas_pdf():
+    """Genera y devuelve un PDF con el resumen de facturas"""
+
+    if not os.path.exists(FACTURAS_FILE):
+        return jsonify({"error": "No hay facturas generadas"}), 404
+
+    with open(FACTURAS_FILE, "r", encoding="utf-8") as f:
+        facturas = json.load(f)
+
+    # Crear PDF en memoria
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    pdf.setTitle("Facturas - Tecnologías Chapinas S.A.")
+
+    # Encabezado
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(150, 750, "Reporte de Facturas - Tecnologías Chapinas S.A.")
+    pdf.setFont("Helvetica", 12)
+    y = 720
+
+    if not facturas:
+        pdf.drawString(200, y, "No existen facturas registradas.")
+    else:
+        for factura in facturas:
+            pdf.drawString(50, y, f"Cliente: {factura.get('cliente', 'N/A')}")
+            y -= 20
+            pdf.drawString(50, y, f"Correo: {factura.get('correo', 'N/A')}")
+            y -= 20
+            pdf.drawString(50, y, f"Total: Q{factura.get('total', 0):.2f}")
+            y -= 40
+
+            # Nueva página si se llena
+            if y < 100:
+                pdf.showPage()
+                y = 750
+
+    pdf.save()
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="facturas.pdf",
+        mimetype="application/pdf"
+    )
+
+#----------------------------------------------GENERACION DE FACTURAS EN XML
+@app.route('/api/facturas/xml', methods=['GET'])
+def descargar_facturas_xml():
+    ruta = os.path.join(DATA_DIR, "facturas.json")
+
+    if not os.path.exists(ruta):
+        return jsonify({"error": "No hay facturas registradas"}), 404
+
+    try:
+        with open(ruta, "r", encoding="utf-8") as f:
+            facturas = json.load(f)
+
+        # Crear elemento raíz
+        root = ET.Element("facturas")
+
+        for factura in facturas:
+            factura_elem = ET.SubElement(root, "factura")
+            ET.SubElement(factura_elem, "cliente").text = factura["cliente"]
+            ET.SubElement(factura_elem, "correo").text = factura["correo"]
+            ET.SubElement(factura_elem, "total").text = str(factura["total"])
+
+            detalle_elem = ET.SubElement(factura_elem, "detalle")
+
+            for item in factura.get("detalle", []):
+                item_elem = ET.SubElement(detalle_elem, "item")
+                ET.SubElement(item_elem, "recurso").text = item["recurso"]
+                ET.SubElement(item_elem, "horas").text = str(item["horas"])
+                ET.SubElement(item_elem, "costo_hora").text = str(item["costo_hora"])
+                ET.SubElement(item_elem, "subtotal").text = str(item["subtotal"])
+
+        #Convertir a XML string
+        xml_str = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+        return Response(xml_str, mimetype="application/xml",
+                        headers={"Content-Disposition": "attachment; filename=facturas.xml"})
+
+    except Exception as e:
+        return jsonify({"error": f"Error generando XML: {str(e)}"}), 500
+
+
 
 #SISTEMA
 @app.route('/api/sistema/inicializar', methods=['POST'])

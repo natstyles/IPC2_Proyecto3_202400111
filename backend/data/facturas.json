@@ -3,13 +3,27 @@
         "cliente_id": 1,
         "cliente": "Juan Pérez",
         "correo": "juan@example.com",
-        "total": 137.5,
+        "total": 55.0,
         "detalle": [
             {
                 "recurso": "Servidor A",
-                "horas": 25.0,
+                "horas": 10,
                 "costo_hora": 5.5,
-                "subtotal": 137.5
+                "subtotal": 55.0
+            }
+        ]
+    },
+    {
+        "cliente_id": 2,
+        "cliente": "María López",
+        "correo": "maria@example.com",
+        "total": 25.0,
+        "detalle": [
+            {
+                "recurso": "Almacenamiento Cloud",
+                "horas": 20,
+                "costo_hora": 1.25,
+                "subtotal": 25.0
             }
         ]
     },

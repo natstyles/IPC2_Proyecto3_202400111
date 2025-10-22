@@ -3,17 +3,17 @@
         "id": 1,
         "cliente_id": 1,
         "recurso_id": 1,
-        "horas": 25.0,
+        "horas": 10,
         "estado": "Vigente",
-        "costo_total": 137.5
+        "costo_total": 55.0
     },
     {
         "id": 2,
         "cliente_id": 2,
         "recurso_id": 3,
-        "horas": 50.0,
-        "estado": "Cancelada",
-        "costo_total": 62.5
+        "horas": 20,
+        "estado": "Vigente",
+        "costo_total": 25.0
     },
     {
         "id": 3,
