@@ -217,9 +217,23 @@ def crear_cliente():
     direccion = data.get("direccion")
     correo = data.get("correo")
 
+    #Validar campos obligatorios
     if not all([nombre, nit, direccion, correo]):
-        return jsonify({"error": "Faltan campos requeridos"}), 400
+        return jsonify({"error": "Todos los campos son obligatorios (nombre, NIT, dirección, correo)."}), 400
 
+    #Validar formato de correo simple
+    import re
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", correo):
+        return jsonify({"error": "El formato del correo electrónico no es válido."}), 400
+
+    #Validar duplicado por NIT o correo
+    for c in clientes:
+        if c["nit"] == nit:
+            return jsonify({"error": "Ya existe un cliente con ese NIT."}), 400
+        if c["correo"].lower() == correo.lower():
+            return jsonify({"error": "Ya existe un cliente con ese correo electrónico."}), 400
+
+    #Generar usuario y clave automáticamente
     usuario = sugerir_usuario_desde_correo(correo, clientes)
     clave = generar_clave()
 
@@ -408,20 +422,18 @@ def obtener_facturas():
 #----------------------------------------------GENERACION DE FACTURAS EN PDF
 @app.route('/api/facturas/pdf', methods=['GET'])
 def descargar_facturas_pdf():
-    """Genera y devuelve un PDF con el resumen de facturas"""
-
     if not os.path.exists(FACTURAS_FILE):
         return jsonify({"error": "No hay facturas generadas"}), 404
 
     with open(FACTURAS_FILE, "r", encoding="utf-8") as f:
         facturas = json.load(f)
 
-    # Crear PDF en memoria
+    #Crear PDF en memoria
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     pdf.setTitle("Facturas - Tecnologías Chapinas S.A.")
 
-    # Encabezado
+    #Encabezado general
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(150, 750, "Reporte de Facturas - Tecnologías Chapinas S.A.")
     pdf.setFont("Helvetica", 12)
@@ -431,18 +443,53 @@ def descargar_facturas_pdf():
         pdf.drawString(200, y, "No existen facturas registradas.")
     else:
         for factura in facturas:
+            #Verificar espacio
+            if y < 120:
+                pdf.showPage()
+                y = 750
+                pdf.setFont("Helvetica", 12)
+
+            #Datos del cliente
+            pdf.setFont("Helvetica-Bold", 12)
             pdf.drawString(50, y, f"Cliente: {factura.get('cliente', 'N/A')}")
             y -= 20
+            pdf.setFont("Helvetica", 11)
             pdf.drawString(50, y, f"Correo: {factura.get('correo', 'N/A')}")
             y -= 20
             pdf.drawString(50, y, f"Total: Q{factura.get('total', 0):.2f}")
-            y -= 40
+            y -= 20
 
-            # Nueva página si se llena
-            if y < 100:
-                pdf.showPage()
-                y = 750
+            #Encabezado de detalle
+            pdf.setFont("Helvetica-Bold", 11)
+            pdf.drawString(70, y, "Recurso")
+            pdf.drawString(250, y, "Horas")
+            pdf.drawString(320, y, "Costo/h")
+            pdf.drawString(400, y, "Subtotal")
+            y -= 15
+            pdf.line(50, y, 550, y)
+            y -= 10
 
+            #Detalle
+            pdf.setFont("Helvetica", 10)
+            for item in factura.get("detalle", []):
+                pdf.drawString(70, y, item.get("recurso", ""))
+                pdf.drawString(260, y, str(item.get("horas", "")))
+                pdf.drawString(330, y, f"Q{item.get('costo_hora', 0):.2f}")
+                pdf.drawString(410, y, f"Q{item.get('subtotal', 0):.2f}")
+                y -= 15
+
+                #Salto de página si se llena
+                if y < 100:
+                    pdf.showPage()
+                    pdf.setFont("Helvetica", 10)
+                    y = 750
+
+            #Separador entre facturas
+            y -= 20
+            pdf.line(50, y, 550, y)
+            y -= 30
+
+    # Guardar PDF
     pdf.save()
     buffer.seek(0)
 
