@@ -21,8 +21,16 @@ def crear_recurso(nombre, abreviatura, metrica, tipo, valor_x_hora):
         "tipo": tipo,
         "valor_x_hora": valor_x_hora
     }
-    r = requests.post(f"{BACKEND_URL}/recursos", json=data)
-    return r.json()
+
+    try:
+        response = requests.post(f"{BACKEND_URL}/recursos", json=data)
+        if response.status_code == 201:
+            return response.json()
+        else:
+            # Devuelve el mensaje de error del backend
+            return response.json()
+    except Exception as e:
+        return {"error": f"Error al conectar con el backend: {e}"}
 
 def eliminar_recurso(id_recurso):
     r = requests.delete(f"{BACKEND_URL}/recursos/{id_recurso}")
@@ -68,8 +76,23 @@ def crear_instancia(cliente_id, recurso_id, horas):
         "recurso_id": recurso_id,
         "horas": horas
     }
-    r = requests.post(f"{BACKEND_URL}/instancias", json=payload)
-    return r.json()
+
+    try:
+        r = requests.post(f"{BACKEND_URL}/instancias", json=payload)
+
+        # Si Flask devuelve un error, lo devolvemos a Django
+        if r.status_code == 201:
+            return r.json()
+        else:
+            try:
+                return r.json()
+            except Exception:
+                return {"error": f"Error desconocido (código {r.status_code})"}
+
+    except requests.exceptions.RequestException as e:
+        #Error de conexión o backend caído
+        return {"error": f"No se pudo conectar con el backend: {e}"}
+
 
 def cancelar_instancia(id):
     r = requests.put(f"{BACKEND_URL}/instancias/{id}/cancelar")

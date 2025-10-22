@@ -19,5 +19,14 @@
         "nit": "4567891-0",
         "direccion": "Antigua Guatemala",
         "correo": "carlos@example.com"
+    },
+    {
+        "id": 4,
+        "nombre": "Richard Arz",
+        "nit": "1513121212",
+        "direccion": "Casa 20",
+        "correo": "ax@gmail.com",
+        "usuario": "ax",
+        "clave": "CdgXeQq2ZWFs"
     }
 ]

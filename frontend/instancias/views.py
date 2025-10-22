@@ -23,17 +23,34 @@ def listar_instancias(request):
 
 def nueva_instancia(request):
     if request.method == 'POST':
-        cliente_id = int(request.POST.get('cliente_id'))
-        recurso_id = int(request.POST.get('recurso_id'))
-        horas = float(request.POST.get('horas'))
-        api.crear_instancia(cliente_id, recurso_id, horas)
+        cliente_id = request.POST.get('cliente_id')
+        recurso_id = request.POST.get('recurso_id')
+        horas = request.POST.get('horas')
+
+        #Enviar datos al backend
+        response = api.crear_instancia(cliente_id, recurso_id, horas)
+
+        #Si hay error en la respuesta del backend, mostrarlo
+        if isinstance(response, dict) and response.get("error"):
+            clientes = api.obtener_clientes()
+            recursos = api.obtener_recursos()
+            return render(request, 'instancias/nuevo.html', {
+                'clientes': clientes,
+                'recursos': recursos,
+                'error': response["error"]
+            })
+
+        #Si todo está bien, redirigir
         return redirect('/instancias/')
+
+    #Mostrar formulario vacío
     clientes = api.obtener_clientes()
     recursos = api.obtener_recursos()
     return render(request, 'instancias/nuevo.html', {
         'clientes': clientes,
         'recursos': recursos
     })
+
 
 def cancelar_instancia(request, id):
     api.cancelar_instancia(id)

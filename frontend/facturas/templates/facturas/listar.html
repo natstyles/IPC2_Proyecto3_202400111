@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Facturas{% endblock %}
 {% block content %}
+
+<!--ERRORES & ALERTS-->
+
+{% if error %}
+<div class="alert alert-error">
+    ⚠️ {{ error }}
+</div>
+{% endif %}
+
+{% if warning %}
+<div class="alert alert-warning">
+    ⚠️ {{ warning }}
+</div>
+{% endif %}
+
+{% if info %}
+<div class="alert alert-info">
+    ℹ️ {{ info }}
+</div>
+{% endif %}
+
 <h2>Listado de Facturas</h2>
 
 <a href="{% url 'descargar_facturas' %}" class="btn">Descargar XML</a>

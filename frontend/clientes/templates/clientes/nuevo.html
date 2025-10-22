@@ -4,16 +4,23 @@
 
 <h2>Registrar Nuevo Cliente</h2>
 
+<!--ERRORES & ALERTS-->
+
 {% if error %}
-<div style="
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-">
+<div class="alert alert-error">
     ⚠️ {{ error }}
+</div>
+{% endif %}
+
+{% if warning %}
+<div class="alert alert-warning">
+    ⚠️ {{ warning }}
+</div>
+{% endif %}
+
+{% if info %}
+<div class="alert alert-info">
+    ℹ️ {{ info }}
 </div>
 {% endif %}
 

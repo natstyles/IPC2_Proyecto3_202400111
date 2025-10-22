@@ -176,11 +176,45 @@ def obtener_recurso(id):
 
 @app.route('/api/recursos', methods=['POST'])
 def crear_recurso():
-    nuevo = request.json
-    nuevo["id"] = len(recursos) + 1
-    recursos.append(nuevo)
+    data = request.get_json() or {}
+    nombre = data.get("nombre")
+    abreviatura = data.get("abreviatura")
+    tipo = data.get("tipo")
+    metrica = data.get("metrica")
+    valor_x_hora = data.get("valor_x_hora")
+
+
+    #Validar campos obligatorios
+    if not nombre or valor_x_hora is None:
+        return jsonify({"error": "Los campos 'nombre' ó 'valor_x_hora' son obligatorios."}), 400
+
+    #Validar tipo de dato del costo
+    try:
+        valor_x_hora = float(valor_x_hora)
+        if valor_x_hora <= 0:
+            return jsonify({"error": "El costo por hora debe ser mayor que 0."}), 400
+    except ValueError:
+        return jsonify({"error": "El costo por hora debe ser numérico."}), 400
+
+    #Validar duplicados
+    for r in recursos:
+        if r["nombre"].lower() == nombre.lower():
+            return jsonify({"error": "Ya existe un recurso con ese nombre."}), 400
+
+    #Crear nuevo recurso
+    nuevo_recurso = {
+        "id": len(recursos) + 1,
+        "nombre": nombre,
+        "abreviatura": abreviatura,
+        "tipo": tipo,
+        "metrica": metrica,
+        "valor_x_hora": float(valor_x_hora)
+    }
+
+    recursos.append(nuevo_recurso)
     guardar_datos(RECURSOS_FILE, recursos)
-    return jsonify(nuevo), 201
+
+    return jsonify(nuevo_recurso), 201
 
 @app.route('/api/recursos/<int:id>', methods=['PUT'])
 def actualizar_recurso(id):
@@ -267,21 +301,52 @@ def obtener_instancias():
 
 @app.route('/api/instancias', methods=['POST'])
 def crear_instancia():
-    nueva = request.json
-    nueva["id"] = len(instancias) + 1
-    nueva["estado"] = "Vigente"
+    data = request.get_json() or {}
+
+    #Validar campos obligatorios
+    if not all([data.get("cliente_id"), data.get("recurso_id"), data.get("horas")]):
+        return jsonify({"error": "Los campos 'cliente_id', 'recurso_id' y 'horas' son obligatorios."}), 400
+
+    try:
+        cliente_id = int(data["cliente_id"])
+        recurso_id = int(data["recurso_id"])
+        horas = float(data["horas"])
+    except ValueError:
+        return jsonify({"error": "Los campos 'cliente_id', 'recurso_id' y 'horas' deben ser numéricos."}), 400
+
+    #Validar existencia de cliente y recurso
+    cliente = buscar_por_id(clientes, cliente_id)
+    recurso = buscar_por_id(recursos, recurso_id)
+
+    if not cliente:
+        return jsonify({"error": f"No existe el cliente con ID {cliente_id}."}), 404
+    if not recurso:
+        return jsonify({"error": f"No existe el recurso con ID {recurso_id}."}), 404
+
+    #Validar que las horas sean mayores que cero
+    if horas <= 0:
+        return jsonify({"error": "Las horas deben ser mayores que 0."}), 400
 
     #Calcular costo total según el recurso
-    recurso = buscar_por_id(recursos, int(nueva["recurso_id"]))
-    horas = float(nueva.get("horas", 0))
-    if recurso:
-        nueva["costo_total"] = horas * float(recurso["valor_x_hora"])
-    else:
-        nueva["costo_total"] = 0
+    costo = float(recurso.get("valor_x_hora", 0))
+    if costo <= 0:
+        return jsonify({"error": "El recurso tiene un costo inválido."}), 400
+
+    nueva = {
+        "id": len(instancias) + 1,
+        "cliente_id": cliente_id,
+        "recurso_id": recurso_id,
+        "horas": horas,
+        "estado": "Vigente",
+        "costo_total": horas * costo
+    }
 
     instancias.append(nueva)
     guardar_datos(INSTANCIAS_FILE, instancias)
+
+    print("Instancia creada:", nueva)
     return jsonify(nueva), 201
+
 
 @app.route('/api/instancias/<int:id>/cancelar', methods=['PUT'])
 def cancelar_instancia(id):
@@ -409,15 +474,50 @@ def guardar_facturas_xml(facturas):
 
 @app.route('/api/facturas', methods=['GET'])
 def obtener_facturas():
+
+    facturas = []
+
+    # Recalcular todas las facturas desde instancias vigentes o canceladas
+    for instancia in instancias:
+        cliente = next((c for c in clientes if c["id"] == instancia["cliente_id"]), None)
+        recurso = next((r for r in recursos if r["id"] == instancia["recurso_id"]), None)
+
+        if not cliente or not recurso:
+            continue
+
+        if instancia["estado"] in ["Vigente", "Cancelada"]:
+            factura_existente = next((f for f in facturas if f["cliente_id"] == cliente["id"]), None)
+            detalle = {
+                "recurso": recurso["nombre"],
+                "costo_hora": float(recurso["valor_x_hora"]),
+                "horas": float(instancia["horas"]),
+                "subtotal": float(instancia["costo_total"])
+            }
+
+            if factura_existente:
+                factura_existente["detalle"].append(detalle)
+                factura_existente["total"] += float(instancia["costo_total"])
+            else:
+                facturas.append({
+                    "cliente_id": cliente["id"],
+                    "cliente": cliente["nombre"],
+                    "correo": cliente["correo"],
+                    "detalle": [detalle],
+                    "total": float(instancia["costo_total"])
+                })
+
+    # Guardar las facturas recalculadas
     ruta = os.path.join(DATA_DIR, "facturas.json")
-    if not os.path.exists(ruta):
-        return jsonify([])
     try:
-        with open(ruta, "r", encoding="utf-8") as f:
-            facturas = json.load(f)
-            return jsonify(facturas)
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(facturas, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error guardando facturas.json: {e}")
+
+    print(f"Se generaron {len(facturas)} facturas y se guardaron en facturas.json")
+
+    return jsonify(facturas), 200
+
 
 #----------------------------------------------GENERACION DE FACTURAS EN PDF
 @app.route('/api/facturas/pdf', methods=['GET'])

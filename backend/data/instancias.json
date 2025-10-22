@@ -22,5 +22,13 @@
         "horas": 5,
         "estado": "Vigente",
         "costo_total": 18.75
+    },
+    {
+        "id": 4,
+        "cliente_id": 4,
+        "recurso_id": 5,
+        "horas": 2.0,
+        "estado": "Vigente",
+        "costo_total": 30.0
     }
 ]
