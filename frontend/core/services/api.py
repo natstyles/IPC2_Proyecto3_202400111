@@ -1,4 +1,7 @@
 import requests
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from core.services import api
 
 #URL base de Flask
 BACKEND_URL = "http://localhost:5000/api"
@@ -105,9 +108,41 @@ def inicializar_sistema():
 
 #XMLS
 def enviar_xml_configuracion(archivo):
-    files = {'archivo': archivo}
-    r = requests.post(f"{BACKEND_URL}/configuracion/cargar-xml", files=files)
-    return r.json()
+    files = {'archivo': archivo}  # 👈 debe llamarse igual que en app.py
+    try:
+        r = requests.post(f"{BACKEND_URL}/configuracion", files=files)
+        if r.status_code == 200:
+            return r.json()
+        else:
+            print("⚠️ Error HTTP:", r.status_code, r.text)
+            return {"error": f"Error HTTP {r.status_code}"}
+    except Exception as e:
+        print("❌ Error al comunicar con el backend:", e)
+        return {"error": str(e)}
+
+
+def subir_configuracion(request):
+    if request.method == "POST" and request.FILES.get("archivo"):
+        archivo = request.FILES["archivo"]
+        resultado = api.enviar_xml_configuracion(archivo)
+
+        if "resumen" in resultado:
+            resumen = resultado["resumen"]
+            messages.success(
+                request,
+                f"Archivo procesado correctamente: "
+                f"{resumen.get('recursos_cargados', 0)} recursos, "
+                f"{resumen.get('categorias_cargadas', 0)} categorías, "
+                f"{resumen.get('configuraciones_cargadas', 0)} configuraciones, "
+                f"{resumen.get('clientes_cargados', 0)} clientes, "
+                f"{resumen.get('instancias_cargadas', 0)} instancias."
+            )
+        else:
+            messages.error(request, resultado.get("error", "Error desconocido al procesar el archivo."))
+
+        return redirect("subir_configuracion")
+
+    return render(request, "configuracion/cargar_configuracion.html")
 
 def enviar_xml_consumos(archivo):
     files = {'archivo': archivo}

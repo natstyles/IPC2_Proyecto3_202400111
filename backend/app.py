@@ -13,15 +13,20 @@ import io
 app = Flask(__name__)
 CORS(app) #Peticiones del frontend
 
-#configuración inicial
+#---------------------------------------------- CONFIGURACIÓN INICIAL
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
+
+# Archivos de datos
 CLIENTES_FILE = os.path.join(DATA_DIR, "clientes.json")
 RECURSOS_FILE = os.path.join(DATA_DIR, "recursos.json")
 INSTANCIAS_FILE = os.path.join(DATA_DIR, "instancias.json")
 CONSUMOS_FILE = os.path.join(DATA_DIR, "consumos.json")
 FACTURAS_FILE = os.path.join(DATA_DIR, "facturas.json")
+CATEGORIAS_FILE = os.path.join(DATA_DIR, "categorias.json")
+CONFIGURACIONES_FILE = os.path.join(DATA_DIR, "configuraciones.json")
 
+#---------------------------------------------- FUNCIONES DE UTILIDAD
 def cargar_datos(ruta, datos_defecto):
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
@@ -39,29 +44,18 @@ def guardar_datos(ruta, datos):
         json.dump(datos, f, indent=4, ensure_ascii=False)
 
 def buscar_por_id(lista, id):
+    """Busca un elemento por ID en una lista de diccionarios."""
     for item in lista:
         if item["id"] == id:
             return item
     return None
 
-#carga inicial con datos persistentes
-recursos = cargar_datos(RECURSOS_FILE, [
-    {"id": 1, "nombre": "Servidor A", "abreviatura": "SRV-A", "tipo": "VM", "metrica": "8 GB RAM", "valor_x_hora": 5.5},
-    {"id": 2, "nombre": "Base de Datos SQL", "abreviatura": "DB01", "tipo": "DB", "metrica": "50 GB", "valor_x_hora": 3.75},
-    {"id": 3, "nombre": "Almacenamiento Cloud", "abreviatura": "STO", "tipo": "Storage", "metrica": "100 GB", "valor_x_hora": 1.25}
-])
-
-clientes = cargar_datos(CLIENTES_FILE, [
-    {"id": 1, "nombre": "Juan Pérez", "nit": "1234567-8", "direccion": "Zona 1", "correo": "juan@example.com"},
-    {"id": 2, "nombre": "María López", "nit": "9876543-2", "direccion": "Zona 10", "correo": "maria@example.com"},
-    {"id": 3, "nombre": "Carlos Ramírez", "nit": "4567891-0", "direccion": "Antigua Guatemala", "correo": "carlos@example.com"}
-])
-
-instancias = cargar_datos(INSTANCIAS_FILE, [
-    {"id": 1, "cliente_id": 1, "recurso_id": 1, "horas": 10, "estado": "Vigente", "costo_total": 10 * 5.5},
-    {"id": 2, "cliente_id": 2, "recurso_id": 3, "horas": 20, "estado": "Cancelada", "costo_total": 20 * 1.25},
-    {"id": 3, "cliente_id": 3, "recurso_id": 2, "horas": 5, "estado": "Vigente", "costo_total": 5 * 3.75}
-])
+#---------------------------------------------- CARGA INICIAL DE DATOS PERSISTENTES
+recursos = cargar_datos(RECURSOS_FILE, [])
+clientes = cargar_datos(CLIENTES_FILE, [])
+instancias = cargar_datos(INSTANCIAS_FILE, [])
+categorias = cargar_datos(CATEGORIAS_FILE, [])
+configuraciones = cargar_datos(CONFIGURACIONES_FILE, [])
 
 #----------------------------------------------FUNCIONES AUXILIARES
 #buscar por id
@@ -92,75 +86,262 @@ def sugerir_usuario_desde_correo(correo: str, clientes_existentes: list) -> str:
         usuario = f"{base}{sufijo}"
     return usuario
 
-#----------------------------------------------CARGA DE ARCHIVOS XML
-@app.route('/api/cargar_xml', methods=['POST'])
-def cargar_xml():
-    #Verificar que se haya enviado el archivo
+#----------------------------------------------CARGA DE ARCHIVO DE CONFIGURACIÓN GLOBAL
+@app.route('/api/configuracion', methods=['POST'])
+def cargar_configuracion():
+    """Carga un XML con recursos, categorías, configuraciones y clientes (robusto: case-insensitive y sin namespaces).
+       Hace upsert (crea/actualiza) y devuelve resúmenes coherentes con tu frontend.
+    """
+
     if 'archivo' not in request.files:
         return jsonify({"error": "No se envió ningún archivo XML"}), 400
 
     archivo = request.files['archivo']
-    tipo = request.form.get('tipo') #clientes o recursos
-
-    if not archivo or archivo.filename == '':
-        return jsonify({"error": "Archivo inválido"}), 400
-
-    if tipo not in ["clientes", "recursos"]:
-        return jsonify({"error": "Debe especificar un tipo válido (clientes o recursos)"}), 400
-
-    #Guardar temporalmente
-    filename = secure_filename(archivo.filename)
-    temp_path = os.path.join(DATA_DIR, filename)
-    archivo.save(temp_path)
 
     try:
-        tree = ET.parse(temp_path)
+        tree = ET.parse(archivo)
         root = tree.getroot()
     except Exception as e:
         return jsonify({"error": f"Error al procesar XML: {str(e)}"}), 400
 
-    nuevos = []
+    # Helpers
+    def tag_name(element):
+        if '}' in element.tag:
+            return element.tag.split('}', 1)[1].lower()
+        return element.tag.lower()
 
-    #----------------------------------------------CARGA DE CLIENTES
-    if tipo == "clientes":
-        global clientes
-        for elem in root.findall("cliente"):
-            nuevo = {
-                "id": len(clientes) + len(nuevos) + 1,
-                "nombre": elem.findtext("nombre"),
-                "nit": elem.findtext("nit"),
-                "direccion": elem.findtext("direccion"),
-                "correo": elem.findtext("correo")
+    def find_child(parent, name):
+        for c in parent:
+            if tag_name(c) == name.lower():
+                return c
+        return None
+
+    print("=== DEBUG ESTRUCTURA XML ===")
+    print("Raíz:", tag_name(root))
+    print("Etiquetas hijas:", [tag_name(c) for c in root])
+    print("=============================")
+
+    # Contadores
+    nuevos_recursos = 0
+    recursos_actualizados = 0
+    nuevas_categorias = 0
+    categorias_actualizadas = 0
+    nuevas_configuraciones = 0
+    configuraciones_actualizadas = 0
+    nuevos_clientes = 0
+    clientes_actualizados = 0
+    nuevas_instancias = 0
+    instancias_actualizadas = 0
+
+    # ---------------------- RECURSOS (upsert) ----------------------
+    lista_recursos = find_child(root, "listarecursos")
+    if lista_recursos is not None:
+        recursos_xml = [r for r in lista_recursos if tag_name(r) == "recurso"]
+        print(f"DEBUG -> Recursos detectados en XML: {len(recursos_xml)}")
+
+        # índice de recursos por id para buscar rápido
+        idx_recursos = {r["id"]: r for r in recursos if "id" in r}
+
+        for elem in recursos_xml:
+            id_attr = next((elem.attrib[k] for k in elem.attrib if "id" in k.lower()), None)
+            recurso_id = int(id_attr) if id_attr and str(id_attr).isdigit() else 0
+            data = {
+                "id": recurso_id,
+                "nombre": (elem.findtext("nombre") or "").strip(),
+                "abreviatura": (elem.findtext("abreviatura") or "").strip(),
+                "metrica": (elem.findtext("metrica") or "").strip(),
+                "tipo": (elem.findtext("tipo") or "").strip(),
+                "valor_x_hora": float(elem.findtext("valorXhora", 0))
             }
-            nuevos.append(nuevo)
+            if recurso_id == 0:
+                print("⚠️  Recurso ignorado por ID inválido")
+                continue
 
-        clientes.extend(nuevos)
-        guardar_datos(CLIENTES_FILE, clientes)
+            if recurso_id in idx_recursos:
+                # actualizar
+                idx_recursos[recurso_id].update(data)
+                recursos_actualizados += 1
+            else:
+                # crear
+                recursos.append(data)
+                idx_recursos[recurso_id] = data
+                nuevos_recursos += 1
 
-    #----------------------------------------------CARGA DE RECURSOS
-    elif tipo == "recursos":
-        global recursos
-        for elem in root.findall("recurso"):
-            nuevo = {
-                "id": len(recursos) + len(nuevos) + 1,
-                "nombre": elem.findtext("nombre"),
-                "abreviatura": elem.findtext("abreviatura"),
-                "tipo": elem.findtext("tipo"),
-                "metrica": elem.findtext("metrica"),
-                "valor_x_hora": float(elem.findtext("valor_x_hora"))
-            }
-            nuevos.append(nuevo)
-
-        recursos.extend(nuevos)
         guardar_datos(RECURSOS_FILE, recursos)
+        print(f"✅ Recursos -> nuevos: {nuevos_recursos}, actualizados: {recursos_actualizados}")
 
-    #borramos archivo temporal
-    os.remove(temp_path)
+    # ---------------------- CATEGORÍAS y CONFIGURACIONES (upsert) ----------------------
+    lista_categorias = find_child(root, "listacategorias")
+    if lista_categorias is not None:
+        cats_xml = [c for c in lista_categorias if tag_name(c) == "categoria"]
+        print(f"DEBUG -> Categorías detectadas en XML: {len(cats_xml)}")
+
+        idx_categorias = {c["id"]: c for c in categorias if "id" in c}
+        idx_configuraciones = {c["id"]: c for c in configuraciones if "id" in c}
+
+        for cat in cats_xml:
+            id_cat = next((cat.attrib[k] for k in cat.attrib if "id" in k.lower()), None)
+            cat_id = int(id_cat) if id_cat and str(id_cat).isdigit() else None
+            if cat_id is None:
+                # si viniera sin id, asignamos uno nuevo incremental
+                cat_id = (max([c["id"] for c in categorias], default=0) + 1)
+
+            cat_data = {
+                "id": cat_id,
+                "nombre": (cat.findtext("nombre") or "").strip(),
+                "descripcion": (cat.findtext("descripcion") or "").strip(),
+                "carga_trabajo": (cat.findtext("cargaTrabajo") or "").strip()
+            }
+
+            if cat_id in idx_categorias:
+                idx_categorias[cat_id].update(cat_data)
+                categorias_actualizadas += 1
+            else:
+                categorias.append(cat_data)
+                idx_categorias[cat_id] = cat_data
+                nuevas_categorias += 1
+
+            # Configuraciones dentro de la categoría
+            lista_config = find_child(cat, "listaconfiguraciones")
+            if lista_config is not None:
+                confs_xml = [c for c in lista_config if tag_name(c) == "configuracion"]
+                for conf in confs_xml:
+                    id_conf = next((conf.attrib[k] for k in conf.attrib if "id" in k.lower()), None)
+                    conf_id = int(id_conf) if id_conf and str(id_conf).isdigit() else None
+                    if conf_id is None:
+                        conf_id = (max([c["id"] for c in configuraciones], default=0) + 1)
+
+                    conf_data = {
+                        "id": conf_id,
+                        "nombre": (conf.findtext("nombre") or "").strip(),
+                        "descripcion": (conf.findtext("descripcion") or "").strip(),
+                        "categoria_id": cat_id,
+                        "recursos": []
+                    }
+
+                    # recursosConfiguracion
+                    rec_conf = find_child(conf, "recursosconfiguracion")
+                    if rec_conf is not None:
+                        for rnode in rec_conf:
+                            if tag_name(rnode) == "recurso":
+                                rid_attr = next((rnode.attrib[k] for k in rnode.attrib if "id" in k.lower()), None)
+                                rid = int(rid_attr) if rid_attr and str(rid_attr).isdigit() else 0
+                                cantidad = float((rnode.text or "0").strip())
+                                conf_data["recursos"].append({"id_recurso": rid, "cantidad": cantidad})
+
+                    if conf_id in idx_configuraciones:
+                        idx_configuraciones[conf_id].update({
+                            k: v for k, v in conf_data.items() if k != "recursos"
+                        })
+                        # reemplazar lista de recursos de la configuración
+                        idx_configuraciones[conf_id]["recursos"] = conf_data["recursos"]
+                        configuraciones_actualizadas += 1
+                    else:
+                        configuraciones.append(conf_data)
+                        idx_configuraciones[conf_id] = conf_data
+                        nuevas_configuraciones += 1
+
+        guardar_datos(CATEGORIAS_FILE, categorias)
+        guardar_datos(CONFIGURACIONES_FILE, configuraciones)
+        print(f"✅ Categorías -> nuevas: {nuevas_categorias}, actualizadas: {categorias_actualizadas}")
+        print(f"✅ Configuraciones -> nuevas: {nuevas_configuraciones}, actualizadas: {configuraciones_actualizadas}")
+
+    # ---------------------- CLIENTES e INSTANCIAS (upsert) ----------------------
+    lista_clientes = find_child(root, "listaclientes")
+    if lista_clientes is not None:
+        clientes_xml = [c for c in lista_clientes if tag_name(c) == "cliente"]
+        print(f"DEBUG -> Clientes detectados en XML: {len(clientes_xml)}")
+
+        # índices para búsquedas rápidas
+        idx_clientes_por_nit = {c.get("nit"): c for c in clientes if c.get("nit")}
+        idx_instancias = {i["id"]: i for i in instancias if "id" in i}
+
+        for cli in clientes_xml:
+            nit_attr = next((cli.attrib[k] for k in cli.attrib if "nit" in k.lower()), None)
+            nit = nit_attr or f"NO_NIT_{len(clientes)+1}"
+
+            cli_data = {
+                "nombre": (cli.findtext("nombre") or "").strip(),
+                "usuario": (cli.findtext("usuario") or "").strip(),
+                "clave": (cli.findtext("clave") or "").strip(),
+                "direccion": (cli.findtext("direccion") or "").strip(),
+                "correo": (cli.findtext("correoElectronico") or "").strip(),
+                "nit": nit
+            }
+
+            if nit in idx_clientes_por_nit:
+                # actualizar existente
+                idx_clientes_por_nit[nit].update(cli_data)
+                cliente_id = idx_clientes_por_nit[nit]["id"]
+                clientes_actualizados += 1
+            else:
+                # crear nuevo con id incremental seguro
+                cliente_id = (max([c["id"] for c in clientes], default=0) + 1)
+                nuevo = {"id": cliente_id, **cli_data}
+                clientes.append(nuevo)
+                idx_clientes_por_nit[nit] = nuevo
+                nuevos_clientes += 1
+
+            # Instancias del cliente (upsert por id)
+            lista_instancias = find_child(cli, "listainstancias")
+            if lista_instancias is not None:
+                for inst in lista_instancias:
+                    if tag_name(inst) != "instancia":
+                        continue
+                    # id de instancia
+                    inst_id_raw = inst.get("id")
+                    inst_id = int(inst_id_raw) if inst_id_raw and str(inst_id_raw).isdigit() else (max([i["id"] for i in instancias], default=0) + 1)
+
+                    inst_data = {
+                        "id": inst_id,
+                        "cliente_id": cliente_id,
+                        "configuracion_id": int(inst.findtext("idConfiguracion", 0)),
+                        "nombre": (inst.findtext("nombre") or "").strip(),
+                        "fecha_inicio": (inst.findtext("fechaInicio") or "").strip(),
+                        "estado": (inst.findtext("estado") or "").strip(),
+                        "fecha_final": (inst.findtext("fechaFinal") or "").strip(),
+                        "horas": 0.0 if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("horas", 0.0),
+                        "costo_total": 0.0 if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("costo_total", 0.0),
+                        "recurso_id": None if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("recurso_id")
+                    }
+
+                    if inst_id in idx_instancias:
+                        idx_instancias[inst_id].update(inst_data)
+                        instancias_actualizadas += 1
+                    else:
+                        instancias.append(inst_data)
+                        idx_instancias[inst_id] = inst_data
+                        nuevas_instancias += 1
+
+        guardar_datos(CLIENTES_FILE, clientes)
+        guardar_datos(INSTANCIAS_FILE, instancias)
+        print(f"✅ Clientes -> nuevos: {nuevos_clientes}, actualizados: {clientes_actualizados}")
+        print(f"✅ Instancias -> nuevas: {nuevas_instancias}, actualizadas: {instancias_actualizadas}")
+
+    # --------- Resumen (mantenemos las claves que usa tu frontend) ---------
+    resumen = {
+        "recursos_cargados": nuevos_recursos,
+        "categorias_cargadas": nuevas_categorias,
+        "configuraciones_cargadas": nuevas_configuraciones,
+        "clientes_cargados": nuevos_clientes,
+        "instancias_cargadas": nuevas_instancias,
+        # info extra opcional (por si la quieres mostrar)
+        "recursos_actualizados": recursos_actualizados,
+        "categorias_actualizadas": categorias_actualizadas,
+        "configuraciones_actualizadas": configuraciones_actualizadas,
+        "clientes_actualizados": clientes_actualizados,
+        "instancias_actualizadas": instancias_actualizadas,
+    }
+
+    print("=== RESUMEN FINAL ===")
+    for k, v in resumen.items():
+        print(f"{k}: {v}")
+    print("=====================")
 
     return jsonify({
-        "message": f"Se cargaron {len(nuevos)} {tipo}",
-        "registros": nuevos
-    }), 201
+        "message": "Archivo procesado correctamente",
+        "resumen": resumen
+    }), 200
 
 #----------------------------------------------ENDPOINTS RECURSOS
 @app.route('/api/recursos', methods=['GET'])

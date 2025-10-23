@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "nombre": "Desarrollo",
+        "descripcion": "Configuraciones ligeras para entornos de prueba",
+        "carga_trabajo": "Baja"
+    },
+    {
+        "id": 2,
+        "nombre": "Producción",
+        "descripcion": "Instancias de alto rendimiento para servicios en línea",
+        "carga_trabajo": "Alta"
+    }
+]

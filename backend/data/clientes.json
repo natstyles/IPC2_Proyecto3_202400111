@@ -1,32 +1,29 @@
 [
     {
         "id": 1,
-        "nombre": "Juan Pérez",
-        "nit": "1234567-8",
-        "direccion": "Zona 1",
-        "correo": "juan@example.com"
+        "nombre": "Ana Torres",
+        "usuario": "ana.t",
+        "clave": "ana2025",
+        "direccion": "Zona 9, Ciudad de Guatemala",
+        "correo": "ana@devcloud.com",
+        "nit": "778899-0"
     },
     {
         "id": 2,
-        "nombre": "María López",
-        "nit": "9876543-2",
-        "direccion": "Zona 10",
-        "correo": "maria@example.com"
+        "nombre": "Pedro Gómez",
+        "usuario": "pgomez",
+        "clave": "pgomez2025",
+        "direccion": "Zona 14, Ciudad de Guatemala",
+        "correo": "pedro@empresa.com",
+        "nit": "991122-1"
     },
     {
         "id": 3,
-        "nombre": "Carlos Ramírez",
-        "nit": "4567891-0",
-        "direccion": "Antigua Guatemala",
-        "correo": "carlos@example.com"
-    },
-    {
-        "id": 4,
-        "nombre": "Richard Arz",
-        "nit": "1513121212",
-        "direccion": "Casa 20",
-        "correo": "ax@gmail.com",
-        "usuario": "ax",
-        "clave": "CdgXeQq2ZWFs"
+        "nombre": "Richard",
+        "nit": "151515",
+        "direccion": "NIGALAND",
+        "correo": "A@gmail.com",
+        "usuario": "A",
+        "clave": "F2EZ0TTxUZwJ"
     }
 ]

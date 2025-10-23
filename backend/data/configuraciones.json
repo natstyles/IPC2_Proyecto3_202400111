@@ -1,0 +1,74 @@
+[
+    {
+        "id": 1,
+        "nombre": "Dev Básica",
+        "descripcion": "1 CPU, 2GB RAM, 20GB SSD",
+        "categoria_id": 1,
+        "recursos": [
+            {
+                "id_recurso": 1,
+                "cantidad": 1.0
+            },
+            {
+                "id_recurso": 2,
+                "cantidad": 2.0
+            },
+            {
+                "id_recurso": 3,
+                "cantidad": 20.0
+            },
+            {
+                "id_recurso": 4,
+                "cantidad": 1.0
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "nombre": "Dev Avanzada",
+        "descripcion": "2 CPU, 4GB RAM, 50GB SSD",
+        "categoria_id": 1,
+        "recursos": [
+            {
+                "id_recurso": 1,
+                "cantidad": 2.0
+            },
+            {
+                "id_recurso": 2,
+                "cantidad": 4.0
+            },
+            {
+                "id_recurso": 3,
+                "cantidad": 50.0
+            },
+            {
+                "id_recurso": 4,
+                "cantidad": 1.0
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "nombre": "Prod Estándar",
+        "descripcion": "4 CPU, 8GB RAM, 200GB SSD",
+        "categoria_id": 2,
+        "recursos": [
+            {
+                "id_recurso": 1,
+                "cantidad": 4.0
+            },
+            {
+                "id_recurso": 2,
+                "cantidad": 8.0
+            },
+            {
+                "id_recurso": 3,
+                "cantidad": 200.0
+            },
+            {
+                "id_recurso": 4,
+                "cantidad": 1.0
+            }
+        ]
+    }
+]
