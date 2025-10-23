@@ -70,20 +70,33 @@ def eliminar_cliente(cliente_id):
 
 #INSTANCIAS
 def obtener_instancias():
-    r = requests.get(f"{BACKEND_URL}/instancias")
-    return r.json()
+    try:
+        r = requests.get(f"{BACKEND_URL}/instancias")
+        if r.status_code == 200:
+            return r.json()
+        else:
+            print(f"Error al obtener instancias: {r.status_code}")
+            return []
+    except Exception as e:
+        print(f"Error conectando al backend: {e}")
+        return []
 
-def crear_instancia(cliente_id, recurso_id, horas):
+
+def crear_instancia(cliente_id, configuracion_id, horas=None, fecha_inicio=None, fecha_final=None):
     payload = {
-        "cliente_id": cliente_id,
-        "recurso_id": recurso_id,
-        "horas": horas
+        "cliente_id": int(cliente_id),
+        "configuracion_id": int(configuracion_id),
     }
+
+    if fecha_inicio and fecha_final:
+        payload["fecha_inicio"] = fecha_inicio
+        payload["fecha_final"] = fecha_final
+    elif horas:
+        payload["horas"] = float(horas)
 
     try:
         r = requests.post(f"{BACKEND_URL}/instancias", json=payload)
 
-        # Si Flask devuelve un error, lo devolvemos a Django
         if r.status_code == 201:
             return r.json()
         else:
@@ -93,7 +106,6 @@ def crear_instancia(cliente_id, recurso_id, horas):
                 return {"error": f"Error desconocido (código {r.status_code})"}
 
     except requests.exceptions.RequestException as e:
-        #Error de conexión o backend caído
         return {"error": f"No se pudo conectar con el backend: {e}"}
 
 
@@ -108,7 +120,7 @@ def inicializar_sistema():
 
 #XMLS
 def enviar_xml_configuracion(archivo):
-    files = {'archivo': archivo}  # 👈 debe llamarse igual que en app.py
+    files = {'archivo': archivo}
     try:
         r = requests.post(f"{BACKEND_URL}/configuracion", files=files)
         if r.status_code == 200:
@@ -120,7 +132,7 @@ def enviar_xml_configuracion(archivo):
         print("❌ Error al comunicar con el backend:", e)
         return {"error": str(e)}
 
-
+#CONFIGURACIONES
 def subir_configuracion(request):
     if request.method == "POST" and request.FILES.get("archivo"):
         archivo = request.FILES["archivo"]
@@ -143,6 +155,44 @@ def subir_configuracion(request):
         return redirect("subir_configuracion")
 
     return render(request, "configuracion/cargar_configuracion.html")
+
+def obtener_configuraciones():
+    try:
+        response = requests.get(f"{BACKEND_URL}/configuraciones")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print("Error al obtener configuraciones:", response.text)
+            return []
+    except Exception as e:
+        print("Error al conectar con el backend (configuraciones):", e)
+        return []
+    
+def crear_configuracion(data):
+    try:
+        response = requests.post(f"{BACKEND_URL}/configuraciones", json=data)
+        return response.json()
+    except Exception as e:
+        print("Error al crear configuración:", e)
+        return {"error": str(e)}
+
+def eliminar_configuracion(config_id):
+    try:
+        response = requests.delete(f"{BACKEND_URL}/configuraciones/{config_id}")
+        return response.json()
+    except Exception as e:
+        print("Error al eliminar configuración:", e)
+        return {"error": str(e)}
+
+#CATEGORIAS
+def obtener_categorias():
+    response = requests.get(f"{BACKEND_URL}/categorias")
+    return response.json() if response.status_code == 200 else []
+
+def obtener_recursos():
+    response = requests.get(f"{BACKEND_URL}/recursos")
+    return response.json() if response.status_code == 200 else []
+
 
 def enviar_xml_consumos(archivo):
     files = {'archivo': archivo}

@@ -32,15 +32,24 @@
         {% endfor %}
     </select><br>
 
-    <label>Recurso:</label>
-    <select name="recurso_id">
-        {% for r in recursos %}
-        <option value="{{ r.id }}">{{ r.nombre }}</option>
+    <label>Configuración:</label>
+    <select name="configuracion_id">
+        {% for cfg in configuraciones %}
+            <option value="{{ cfg.id }}">{{ cfg.nombre }}</option>
         {% endfor %}
-    </select><br>
+    </select>
+    <br>
 
-    <label>Horas de uso:</label>
-    <input type="number" step="0.01" name="horas"><br>
+    <label>Fecha de inicio:</label>
+    <input type="datetime-local" name="fecha_inicio" class="form-control">
+
+    <label>Fecha final:</label>
+    <input type="datetime-local" name="fecha_final" class="form-control">
+
+    <!-- campo opcional -->
+    <label>Horas (si no usas fechas):</label>
+    <input type="number" name="horas" step="0.1" min="0">
+
 
     <button type="submit">Crear Instancia</button>
 </form>

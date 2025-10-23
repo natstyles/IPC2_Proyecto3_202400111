@@ -32,6 +32,9 @@ urlpatterns = [
     #Gestión de facturas
     path('facturas/', include('facturas.urls')),
 
+    #Gestión de configuraciones
+    path('configuraciones/', include('configuraciones.urls')),
+
     #Página global - RUTA GENERAL DE ULTIMO RICHARD PORFAVOR
     path('', include('core.urls')),
 ]

@@ -30,6 +30,9 @@ def crear_cliente(request):
 
     return render(request, "clientes/nuevo.html")
 
-def eliminar_cliente(id):
-    api.eliminar_cliente(id)
+def eliminar_cliente(request, id):
+    try:
+        api.eliminar_cliente(id)
+    except Exception as e:
+        print("Error al eliminar cliente:", e)
     return redirect("listar_clientes")

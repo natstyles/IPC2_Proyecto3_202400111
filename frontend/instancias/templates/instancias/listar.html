@@ -4,32 +4,36 @@
 
 <a href="/instancias/nuevo/">Nueva Instancia</a>
 
-<table border="1" cellpadding="5">
-    <tr>
-        <th>ID</th>
-        <th>Cliente</th>
-        <th>Recurso</th>
-        <th>Horas</th>
-        <th>Costo Total</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-    </tr>
-    {% for i in instancias %}
-    <tr>
-        <td>{{ i.id }}</td>
-        <td>{{ i.cliente_nombre }}</td>
-        <td>{{ i.recurso_nombre }}</td>
-        <td>{{ i.horas }}</td>
-        <td>Q {{ i.costo_total|floatformat:2 }}</td>
-        <td>{{ i.estado }}</td>
-        <td>
-            {% if i.estado == "Vigente" %}
-            <a href="/instancias/cancelar/{{ i.id }}/">Cancelar</a>
-            {% else %}
-            <span>—</span>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Configuración</th>
+            <th>Horas</th>
+            <th>Costo Total</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in instancias %}
+        <tr>
+            <td>{{ i.id }}</td>
+            <td>{{ i.cliente_nombre }}</td>
+            <td>{{ i.configuracion_nombre }}</td>
+            <td>{{ i.horas }}</td>
+            <td>Q {{ i.costo_total }}</td>
+            <td>{{ i.estado }}</td>
+            <td>
+                {% if i.estado == "Vigente" %}
+                    <a href="/instancias/cancelar/{{ i.id }}">Cancelar</a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

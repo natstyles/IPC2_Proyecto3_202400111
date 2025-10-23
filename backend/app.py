@@ -9,6 +9,7 @@ from xml.etree import ElementTree as ET
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app) #Peticiones del frontend
@@ -89,9 +90,6 @@ def sugerir_usuario_desde_correo(correo: str, clientes_existentes: list) -> str:
 #----------------------------------------------CARGA DE ARCHIVO DE CONFIGURACIÓN GLOBAL
 @app.route('/api/configuracion', methods=['POST'])
 def cargar_configuracion():
-    """Carga un XML con recursos, categorías, configuraciones y clientes (robusto: case-insensitive y sin namespaces).
-       Hace upsert (crea/actualiza) y devuelve resúmenes coherentes con tu frontend.
-    """
 
     if 'archivo' not in request.files:
         return jsonify({"error": "No se envió ningún archivo XML"}), 400
@@ -478,56 +476,80 @@ def eliminar_cliente(id):
 #----------------------------------------------ENDPOINTS INSTANCIAS
 @app.route('/api/instancias', methods=['GET'])
 def obtener_instancias():
-    return jsonify(instancias)
+    instancias = cargar_datos(INSTANCIAS_FILE, [])
+    return jsonify(instancias), 200
 
+#----------------------------------------------CREAR INSTANCIA
 @app.route('/api/instancias', methods=['POST'])
 def crear_instancia():
-    data = request.get_json() or {}
+    from datetime import datetime
 
-    #Validar campos obligatorios
-    if not all([data.get("cliente_id"), data.get("recurso_id"), data.get("horas")]):
-        return jsonify({"error": "Los campos 'cliente_id', 'recurso_id' y 'horas' son obligatorios."}), 400
+    data = request.get_json()
 
-    try:
-        cliente_id = int(data["cliente_id"])
-        recurso_id = int(data["recurso_id"])
-        horas = float(data["horas"])
-    except ValueError:
-        return jsonify({"error": "Los campos 'cliente_id', 'recurso_id' y 'horas' deben ser numéricos."}), 400
+    # Validaciones básicas
+    if not data.get("cliente_id") or not data.get("configuracion_id"):
+        return jsonify({"error": "Cliente y configuración son obligatorios"}), 400
 
-    #Validar existencia de cliente y recurso
-    cliente = buscar_por_id(clientes, cliente_id)
-    recurso = buscar_por_id(recursos, recurso_id)
+    # Cargar datos necesarios
+    clientes = cargar_datos(CLIENTES_FILE, [])
+    configuraciones = cargar_datos(CONFIGURACIONES_FILE, [])
+    recursos = cargar_datos(RECURSOS_FILE, [])
+    instancias = cargar_datos(INSTANCIAS_FILE, [])
 
-    if not cliente:
-        return jsonify({"error": f"No existe el cliente con ID {cliente_id}."}), 404
-    if not recurso:
-        return jsonify({"error": f"No existe el recurso con ID {recurso_id}."}), 404
+    cliente = next((c for c in clientes if c["id"] == int(data["cliente_id"])), None)
+    configuracion = next((c for c in configuraciones if c["id"] == int(data["configuracion_id"])), None)
 
-    #Validar que las horas sean mayores que cero
-    if horas <= 0:
-        return jsonify({"error": "Las horas deben ser mayores que 0."}), 400
+    if not cliente or not configuracion:
+        return jsonify({"error": "Cliente o configuración no válidos"}), 400
 
-    #Calcular costo total según el recurso
-    costo = float(recurso.get("valor_x_hora", 0))
-    if costo <= 0:
-        return jsonify({"error": "El recurso tiene un costo inválido."}), 400
+    # === Cálculo de horas ===
+    horas = data.get("horas")
+    fecha_inicio = data.get("fecha_inicio")
+    fecha_final = data.get("fecha_final")
 
-    nueva = {
-        "id": len(instancias) + 1,
-        "cliente_id": cliente_id,
-        "recurso_id": recurso_id,
-        "horas": horas,
+    if fecha_inicio and fecha_final:
+        try:
+            # Manejar formato datetime-local HTML
+            fmt = "%Y-%m-%dT%H:%M"
+            inicio = datetime.strptime(fecha_inicio, fmt)
+            fin = datetime.strptime(fecha_final, fmt)
+            horas = (fin - inicio).total_seconds() / 3600
+        except Exception as e:
+            return jsonify({"error": f"Fechas inválidas: {e}"}), 400
+
+    if not horas or float(horas) < 0:
+        horas = 0.0
+    else:
+        horas = round(float(horas), 2)
+
+    # === Cálculo del costo total ===
+    costo_total = 0
+    for r_conf in configuracion.get("recursos", []):
+        recurso = next((r for r in recursos if r["id"] == r_conf["id_recurso"]), None)
+        if recurso:
+            costo_total += float(recurso["valor_x_hora"]) * float(r_conf["cantidad"]) * horas
+
+    # === Generar la instancia ===
+    nueva_instancia = {
+        "id": (max([i["id"] for i in instancias], default=0) + 1),
+        "cliente_id": cliente["id"],
+        "configuracion_id": configuracion["id"],
+        "nombre": configuracion["nombre"],  # Nombre igual al de la configuración
+        "fecha_inicio": datetime.now().strftime("%d/%m/%Y") if not fecha_inicio else datetime.strptime(fecha_inicio, "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y"),
         "estado": "Vigente",
-        "costo_total": horas * costo
+        "fecha_final": "--" if not fecha_final else datetime.strptime(fecha_final, "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y"),
+        "horas": horas,
+        "costo_total": round(costo_total, 2),
+        "recurso_id": None  # Ya no se usa directamente, pero se deja para compatibilidad
     }
 
-    instancias.append(nueva)
+    instancias.append(nueva_instancia)
     guardar_datos(INSTANCIAS_FILE, instancias)
 
-    print("Instancia creada:", nueva)
-    return jsonify(nueva), 201
-
+    return jsonify({
+        "message": "Instancia creada correctamente",
+        "instancia": nueva_instancia
+    }), 201
 
 @app.route('/api/instancias/<int:id>/cancelar', methods=['PUT'])
 def cancelar_instancia(id):
@@ -592,11 +614,64 @@ def cargar_consumos():
         "consumos": nuevos_consumos
     })
 
+#----------------------------------------------ENDPOINTS CONFIGURACIONES
+@app.route('/api/configuraciones', methods=['POST'])
+def crear_configuracion():
+    data = request.get_json()
+    nueva_config = {
+        "id": len(configuraciones) + 1,
+        "nombre": data.get("nombre"),
+        "descripcion": data.get("descripcion"),
+        "categoria_id": int(data.get("categoria_id")),
+        "recursos": data.get("recursos", [])
+    }
+    configuraciones.append(nueva_config)
+
+    guardar_datos(CONFIGURACIONES_FILE, configuraciones)
+    return jsonify(nueva_config), 201
+
+@app.route('/api/configuraciones', methods=['GET'])
+def obtener_configuraciones():
+    try:
+        return jsonify(configuraciones), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/configuraciones/<int:config_id>', methods=['DELETE'])
+def eliminar_configuracion(config_id):
+    # Verificar si la configuración existe
+    configuracion = next((c for c in configuraciones if c["id"] == config_id), None)
+    if not configuracion:
+        return jsonify({"error": f"No existe una configuración con ID {config_id}."}), 404
+
+    # Verificar si está siendo usada por alguna instancia
+    usadas = [i for i in instancias if i.get("configuracion_id") == config_id]
+    if usadas:
+        return jsonify({
+            "error": "No se puede eliminar la configuración porque está siendo usada por una o más instancias.",
+            "instancias_en_uso": [i["id"] for i in usadas]
+        }), 400
+
+    # Eliminar del listado
+    configuraciones.remove(configuracion)
+    guardar_datos(CONFIGURACIONES_FILE, configuraciones)
+
+    return jsonify({
+        "message": f"Configuración '{configuracion['nombre']}' eliminada correctamente."
+    }), 200
+
+
+#----------------------------------------------ENDPOINTS CATEGORIAS
+@app.route('/api/categorias', methods=['GET'])
+def obtener_categorias():
+    return jsonify(categorias), 200
+
 #----------------------------------------------ENDPOINTS FACTURACIÓN
 @app.route('/api/facturar', methods=['POST'])
 def generar_facturas():
     clientes = cargar_datos(CLIENTES_FILE, [])
     instancias = cargar_datos(INSTANCIAS_FILE, [])
+    configuraciones = cargar_datos(CONFIGURACIONES_FILE, [])
     recursos = cargar_datos(RECURSOS_FILE, [])
     facturas = []
 
@@ -604,18 +679,29 @@ def generar_facturas():
         total_cliente = 0
         detalle = []
 
+        # Buscar instancias vigentes o canceladas
         for instancia in instancias:
-            if instancia["cliente_id"] == cliente["id"] and instancia["estado"] == "Vigente":
-                recurso = next((r for r in recursos if r["id"] == instancia["recurso_id"]), None)
-                if recurso:
-                    subtotal = instancia["horas"] * recurso["valor_x_hora"]
-                    detalle.append({
-                        "recurso": recurso["nombre"],
-                        "horas": instancia["horas"],
-                        "costo_hora": recurso["valor_x_hora"],
-                        "subtotal": subtotal
-                    })
-                    total_cliente += subtotal
+            if instancia["cliente_id"] == cliente["id"] and instancia["estado"] in ["Vigente", "Cancelada"]:
+                configuracion = next((cfg for cfg in configuraciones if cfg["id"] == instancia["configuracion_id"]), None)
+                if not configuracion:
+                    continue
+
+                # Calcular costo total por cada recurso dentro de la configuración
+                for cfg_recurso in configuracion["recursos"]:
+                    recurso = next((r for r in recursos if r["id"] == cfg_recurso["id_recurso"]), None)
+                    if recurso:
+                        subtotal = round(
+                            recurso["valor_x_hora"] * cfg_recurso["cantidad"] * instancia["horas"], 2
+                        )
+                        detalle.append({
+                            "configuracion": configuracion["nombre"],
+                            "recurso": recurso["nombre"],
+                            "cantidad": cfg_recurso["cantidad"],
+                            "horas": instancia["horas"],
+                            "valor_x_hora": recurso["valor_x_hora"],
+                            "subtotal": subtotal
+                        })
+                        total_cliente += subtotal
 
         if total_cliente > 0:
             factura = {
@@ -627,26 +713,29 @@ def generar_facturas():
             }
             facturas.append(factura)
 
-    guardar_datos(CONSUMOS_FILE.replace("consumos", "facturas"), facturas)
+    guardar_datos(os.path.join(DATA_DIR, "facturas.json"), facturas)
     guardar_facturas_xml(facturas)
+
     return jsonify({"message": f"Se generaron {len(facturas)} facturas", "facturas": facturas})
 
 def guardar_facturas_xml(facturas):
-    root = ET.Element("Facturas")
+    root = ET.Element("facturas")
 
     for factura in facturas:
-        f_elem = ET.SubElement(root, "Factura")
-        ET.SubElement(f_elem, "Cliente").text = factura["cliente"]
-        ET.SubElement(f_elem, "Correo").text = factura["correo"]
-        ET.SubElement(f_elem, "Total").text = str(factura["total"])
+        f_elem = ET.SubElement(root, "factura")
+        ET.SubElement(f_elem, "cliente").text = factura["cliente"]
+        ET.SubElement(f_elem, "correo").text = factura["correo"]
+        ET.SubElement(f_elem, "total").text = str(factura["total"])
 
-        detalle_elem = ET.SubElement(f_elem, "Detalle")
+        detalle_elem = ET.SubElement(f_elem, "detalle")
         for item in factura["detalle"]:
-            item_elem = ET.SubElement(detalle_elem, "Item")
-            ET.SubElement(item_elem, "Recurso").text = item["recurso"]
-            ET.SubElement(item_elem, "Horas").text = str(item["horas"])
-            ET.SubElement(item_elem, "CostoHora").text = str(item["costo_hora"])
-            ET.SubElement(item_elem, "Subtotal").text = str(item["subtotal"])
+            item_elem = ET.SubElement(detalle_elem, "item")
+            ET.SubElement(item_elem, "configuracion").text = item.get("configuracion", "N/A")
+            ET.SubElement(item_elem, "recurso").text = item["recurso"]
+            ET.SubElement(item_elem, "cantidad").text = str(item["cantidad"])
+            ET.SubElement(item_elem, "horas").text = str(item["horas"])
+            ET.SubElement(item_elem, "valor_x_hora").text = str(item["valor_x_hora"])
+            ET.SubElement(item_elem, "subtotal").text = str(item["subtotal"])
 
     tree = ET.ElementTree(root)
     ruta_xml = os.path.join(DATA_DIR, "facturas.xml")
@@ -655,37 +744,57 @@ def guardar_facturas_xml(facturas):
 
 @app.route('/api/facturas', methods=['GET'])
 def obtener_facturas():
+    clientes = cargar_datos(CLIENTES_FILE, [])
+    instancias = cargar_datos(INSTANCIAS_FILE, [])
+    configuraciones = cargar_datos(CONFIGURACIONES_FILE, [])
+    recursos = cargar_datos(RECURSOS_FILE, [])
 
     facturas = []
 
     # Recalcular todas las facturas desde instancias vigentes o canceladas
     for instancia in instancias:
-        cliente = next((c for c in clientes if c["id"] == instancia["cliente_id"]), None)
-        recurso = next((r for r in recursos if r["id"] == instancia["recurso_id"]), None)
-
-        if not cliente or not recurso:
+        if instancia["estado"] not in ["Vigente", "Cancelada"]:
             continue
 
-        if instancia["estado"] in ["Vigente", "Cancelada"]:
-            factura_existente = next((f for f in facturas if f["cliente_id"] == cliente["id"]), None)
+        cliente = next((c for c in clientes if c["id"] == instancia["cliente_id"]), None)
+        configuracion = next((cfg for cfg in configuraciones if cfg["id"] == instancia["configuracion_id"]), None)
+
+        if not cliente or not configuracion:
+            continue
+
+        # Crear o buscar la factura para este cliente
+        factura_existente = next((f for f in facturas if f["cliente_id"] == cliente["id"]), None)
+        if not factura_existente:
+            factura_existente = {
+                "cliente_id": cliente["id"],
+                "cliente": cliente["nombre"],
+                "correo": cliente["correo"],
+                "detalle": [],
+                "total": 0.0
+            }
+            facturas.append(factura_existente)
+
+        # Recorrer recursos de la configuración
+        for cfg_recurso in configuracion["recursos"]:
+            recurso = next((r for r in recursos if r["id"] == cfg_recurso["id_recurso"]), None)
+            if not recurso:
+                continue
+
+            subtotal = round(
+                recurso["valor_x_hora"] * cfg_recurso["cantidad"] * instancia["horas"], 2
+            )
+
             detalle = {
+                "configuracion": configuracion["nombre"],
                 "recurso": recurso["nombre"],
-                "costo_hora": float(recurso["valor_x_hora"]),
-                "horas": float(instancia["horas"]),
-                "subtotal": float(instancia["costo_total"])
+                "cantidad": cfg_recurso["cantidad"],
+                "horas": instancia["horas"],
+                "valor_x_hora": recurso["valor_x_hora"],
+                "subtotal": subtotal
             }
 
-            if factura_existente:
-                factura_existente["detalle"].append(detalle)
-                factura_existente["total"] += float(instancia["costo_total"])
-            else:
-                facturas.append({
-                    "cliente_id": cliente["id"],
-                    "cliente": cliente["nombre"],
-                    "correo": cliente["correo"],
-                    "detalle": [detalle],
-                    "total": float(instancia["costo_total"])
-                })
+            factura_existente["detalle"].append(detalle)
+            factura_existente["total"] += subtotal
 
     # Guardar las facturas recalculadas
     ruta = os.path.join(DATA_DIR, "facturas.json")
@@ -695,82 +804,72 @@ def obtener_facturas():
     except Exception as e:
         print(f"Error guardando facturas.json: {e}")
 
-    print(f"Se generaron {len(facturas)} facturas y se guardaron en facturas.json")
+    print(f"✅ Se generaron {len(facturas)} facturas y se guardaron en facturas.json")
 
     return jsonify(facturas), 200
-
 
 #----------------------------------------------GENERACION DE FACTURAS EN PDF
 @app.route('/api/facturas/pdf', methods=['GET'])
 def descargar_facturas_pdf():
-    if not os.path.exists(FACTURAS_FILE):
+    ruta = os.path.join(DATA_DIR, "facturas.json")
+    if not os.path.exists(ruta):
         return jsonify({"error": "No hay facturas generadas"}), 404
 
-    with open(FACTURAS_FILE, "r", encoding="utf-8") as f:
+    with open(ruta, "r", encoding="utf-8") as f:
         facturas = json.load(f)
 
-    #Crear PDF en memoria
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     pdf.setTitle("Facturas - Tecnologías Chapinas S.A.")
 
-    #Encabezado general
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(150, 750, "Reporte de Facturas - Tecnologías Chapinas S.A.")
-    pdf.setFont("Helvetica", 12)
     y = 720
 
-    if not facturas:
-        pdf.drawString(200, y, "No existen facturas registradas.")
-    else:
-        for factura in facturas:
-            #Verificar espacio
-            if y < 120:
+    for factura in facturas:
+        if y < 150:
+            pdf.showPage()
+            y = 750
+
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(50, y, f"Cliente: {factura['cliente']}")
+        y -= 20
+        pdf.setFont("Helvetica", 11)
+        pdf.drawString(50, y, f"Correo: {factura['correo']}")
+        y -= 20
+        pdf.drawString(50, y, f"Total: Q{factura['total']:.2f}")
+        y -= 25
+
+        pdf.setFont("Helvetica-Bold", 11)
+        pdf.drawString(60, y, "Configuración")
+        pdf.drawString(180, y, "Recurso")
+        pdf.drawString(310, y, "Cant.")
+        pdf.drawString(360, y, "Horas")
+        pdf.drawString(420, y, "V/Hora")
+        pdf.drawString(500, y, "Subtotal")
+        y -= 15
+        pdf.line(50, y, 550, y)
+        y -= 10
+
+        pdf.setFont("Helvetica", 10)
+        for item in factura["detalle"]:
+            pdf.drawString(60, y, item["configuracion"])
+            pdf.drawString(180, y, item["recurso"])
+            pdf.drawString(320, y, str(item["cantidad"]))
+            pdf.drawString(370, y, str(item["horas"]))
+            pdf.drawString(420, y, f"Q{item['valor_x_hora']:.2f}")
+            pdf.drawString(500, y, f"Q{item['subtotal']:.2f}")
+            y -= 15
+
+            if y < 100:
                 pdf.showPage()
                 y = 750
-                pdf.setFont("Helvetica", 12)
+                pdf.setFont("Helvetica", 10)
 
-            #Datos del cliente
-            pdf.setFont("Helvetica-Bold", 12)
-            pdf.drawString(50, y, f"Cliente: {factura.get('cliente', 'N/A')}")
-            y -= 20
-            pdf.setFont("Helvetica", 11)
-            pdf.drawString(50, y, f"Correo: {factura.get('correo', 'N/A')}")
-            y -= 20
-            pdf.drawString(50, y, f"Total: Q{factura.get('total', 0):.2f}")
-            y -= 20
+        y -= 25
+        pdf.line(50, y, 550, y)
+        y -= 25
 
-            #Encabezado de detalle
-            pdf.setFont("Helvetica-Bold", 11)
-            pdf.drawString(70, y, "Recurso")
-            pdf.drawString(250, y, "Horas")
-            pdf.drawString(320, y, "Costo/h")
-            pdf.drawString(400, y, "Subtotal")
-            y -= 15
-            pdf.line(50, y, 550, y)
-            y -= 10
-
-            #Detalle
-            pdf.setFont("Helvetica", 10)
-            for item in factura.get("detalle", []):
-                pdf.drawString(70, y, item.get("recurso", ""))
-                pdf.drawString(260, y, str(item.get("horas", "")))
-                pdf.drawString(330, y, f"Q{item.get('costo_hora', 0):.2f}")
-                pdf.drawString(410, y, f"Q{item.get('subtotal', 0):.2f}")
-                y -= 15
-
-                #Salto de página si se llena
-                if y < 100:
-                    pdf.showPage()
-                    pdf.setFont("Helvetica", 10)
-                    y = 750
-
-            #Separador entre facturas
-            y -= 20
-            pdf.line(50, y, 550, y)
-            y -= 30
-
-    # Guardar PDF
     pdf.save()
     buffer.seek(0)
 
@@ -804,21 +903,28 @@ def descargar_facturas_xml():
 
             detalle_elem = ET.SubElement(factura_elem, "detalle")
 
+            #Cada factura puede tener varias configuraciones con varios recursos
             for item in factura.get("detalle", []):
                 item_elem = ET.SubElement(detalle_elem, "item")
+                ET.SubElement(item_elem, "configuracion").text = item.get("configuracion", "N/A")
                 ET.SubElement(item_elem, "recurso").text = item["recurso"]
+                ET.SubElement(item_elem, "cantidad").text = str(item["cantidad"])
                 ET.SubElement(item_elem, "horas").text = str(item["horas"])
-                ET.SubElement(item_elem, "costo_hora").text = str(item["costo_hora"])
+                ET.SubElement(item_elem, "valor_x_hora").text = str(item["valor_x_hora"])
                 ET.SubElement(item_elem, "subtotal").text = str(item["subtotal"])
 
-        #Convertir a XML string
+        # Convertir a XML con formato legible
         xml_str = ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
-        return Response(xml_str, mimetype="application/xml",
-                        headers={"Content-Disposition": "attachment; filename=facturas.xml"})
+        return Response(
+            xml_str,
+            mimetype="application/xml",
+            headers={"Content-Disposition": "attachment; filename=facturas.xml"}
+        )
 
     except Exception as e:
         return jsonify({"error": f"Error generando XML: {str(e)}"}), 500
+
 
 
 

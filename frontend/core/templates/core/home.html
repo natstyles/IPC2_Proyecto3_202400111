@@ -7,9 +7,9 @@
 <p>Este es el panel principal del sistema. Selecciona una opción para continuar:</p>
 
 <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-    
+
     <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 250px;">
-        <h3>Configuración</h3>
+        <h3>Cargar configuración</h3>
         <p>Sube archivos XML de configuración y consumo para inicializar el sistema.</p>
         <a href="{% url 'cargar_configuracion' %}">Ir a configuración</a>
     </div>
@@ -24,6 +24,14 @@
         <h3>Clientes</h3>
         <p>Consulta y gestiona los clientes registrados en el sistema.</p>
         <a href="/clientes/">Ver clientes</a>
+    </div>
+
+    <!-- 🔹 NUEVA TARJETA: CONFIGURACIONES -->
+    <div style="background: white; padding: 20px; border-radius: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15); width: 250px;">
+        <h3>Configuraciones</h3>
+        <p>Administra las configuraciones de recursos disponibles para instancias.</p>
+        <a href="/configuraciones/">Ver configuraciones</a>
     </div>
 
     <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 250px;">

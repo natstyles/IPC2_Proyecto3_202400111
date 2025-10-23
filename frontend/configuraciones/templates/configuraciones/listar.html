@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Configuraciones{% endblock %}
+
+{% block content %}
+<h2>Configuraciones</h2>
+<a href="/configuraciones/nuevo/">Nueva configuración</a>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Recursos — Cant. a usar</th>
+        <th>Acción</th>
+    </tr>
+    {% for cfg in configuraciones %}
+    <tr>
+        <td>{{ cfg.id }}</td>
+        <td>{{ cfg.nombre }}</td>
+        <td>{{ cfg.descripcion }}</td>
+        <td>
+            <ul>
+                {% for r in cfg.recursos %}
+                    <li>{{ r.nombre_recurso }} — {{ r.cantidad }}</li>
+                {% endfor %}
+            </ul>
+        </td>
+        <td>
+            <a href="/configuraciones/eliminar/{{ cfg.id }}/" onclick="return confirm('¿Eliminar esta configuración?')">Eliminar</a>
+        </td>
+
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -16,14 +16,5 @@
         "direccion": "Zona 14, Ciudad de Guatemala",
         "correo": "pedro@empresa.com",
         "nit": "991122-1"
-    },
-    {
-        "id": 3,
-        "nombre": "Richard",
-        "nit": "151515",
-        "direccion": "NIGALAND",
-        "correo": "A@gmail.com",
-        "usuario": "A",
-        "clave": "F2EZ0TTxUZwJ"
     }
 ]

@@ -1,0 +1,178 @@
+[
+    {
+        "cliente_id": 1,
+        "cliente": "Ana Torres",
+        "correo": "ana@devcloud.com",
+        "detalle": [
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "CPU Virtual",
+                "cantidad": 1.0,
+                "horas": 0.0,
+                "valor_x_hora": 1.2,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Memoria RAM",
+                "cantidad": 2.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.75,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Disco SSD",
+                "cantidad": 20.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.25,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Licencia Linux",
+                "cantidad": 1.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.1,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Avanzada",
+                "recurso": "CPU Virtual",
+                "cantidad": 2.0,
+                "horas": 0.0,
+                "valor_x_hora": 1.2,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Avanzada",
+                "recurso": "Memoria RAM",
+                "cantidad": 4.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.75,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Avanzada",
+                "recurso": "Disco SSD",
+                "cantidad": 50.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.25,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Avanzada",
+                "recurso": "Licencia Linux",
+                "cantidad": 1.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.1,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "CPU Virtual",
+                "cantidad": 1.0,
+                "horas": 8.0,
+                "valor_x_hora": 1.2,
+                "subtotal": 9.6
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Memoria RAM",
+                "cantidad": 2.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.75,
+                "subtotal": 12.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Disco SSD",
+                "cantidad": 20.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.25,
+                "subtotal": 40.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Licencia Linux",
+                "cantidad": 1.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.1,
+                "subtotal": 0.8
+            }
+        ],
+        "total": 62.4
+    },
+    {
+        "cliente_id": 2,
+        "cliente": "Pedro Gómez",
+        "correo": "pedro@empresa.com",
+        "detalle": [
+            {
+                "configuracion": "Prod Estándar",
+                "recurso": "CPU Virtual",
+                "cantidad": 4.0,
+                "horas": 0.0,
+                "valor_x_hora": 1.2,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Prod Estándar",
+                "recurso": "Memoria RAM",
+                "cantidad": 8.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.75,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Prod Estándar",
+                "recurso": "Disco SSD",
+                "cantidad": 200.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.25,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Prod Estándar",
+                "recurso": "Licencia Linux",
+                "cantidad": 1.0,
+                "horas": 0.0,
+                "valor_x_hora": 0.1,
+                "subtotal": 0.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "CPU Virtual",
+                "cantidad": 1.0,
+                "horas": 8.0,
+                "valor_x_hora": 1.2,
+                "subtotal": 9.6
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Memoria RAM",
+                "cantidad": 2.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.75,
+                "subtotal": 12.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Disco SSD",
+                "cantidad": 20.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.25,
+                "subtotal": 40.0
+            },
+            {
+                "configuracion": "Dev Básica",
+                "recurso": "Licencia Linux",
+                "cantidad": 1.0,
+                "horas": 8.0,
+                "valor_x_hora": 0.1,
+                "subtotal": 0.8
+            }
+        ],
+        "total": 62.4
+    }
+]
