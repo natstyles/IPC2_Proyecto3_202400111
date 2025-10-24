@@ -17,7 +17,7 @@ def listar_instancias(request):
             i["fecha_final"] = i.get("fecha_final") or "--"
             i["horas"] = i.get("horas", 0.0)
             i["costo_total"] = i.get("costo_total", 0.0)
-            i["estado"] = i.get("estado", "Vigente")
+            i["estado"] = i.get("estado", "VIGENTE")
 
         return render(request, "instancias/listar.html", {"instancias": instancias})
 

@@ -1,0 +1,176 @@
+/* === Tema oscuro elegante === */
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* === Encabezado === */
+header {
+    background-color: #1f1f1f;
+    color: #ffffff;
+    padding: 15px 25px;
+    border-bottom: 2px solid #3a3a3a;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+nav {
+    margin-top: 10px;
+}
+
+nav a {
+    color: #a5d6ff;
+    margin-right: 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+nav a:hover {
+    color: #64b5f6;
+}
+
+/* === Contenido principal === */
+main {
+    padding: 25px;
+}
+
+/* === Tarjetas === */
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* === Tablas === */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #1b1b1b;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+th {
+    background-color: #252525;
+    color: #90caf9;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+tr:nth-child(even) {
+    background-color: #1a1a1a;
+}
+
+tr:hover {
+    background-color: #2a2a2a;
+}
+
+/* === Botones y enlaces === */
+a, button {
+    color: #64b5f6;
+    text-decoration: none;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+a:hover, button:hover {
+    color: #bbdefb;
+}
+
+button {
+    background-color: #1e88e5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1565c0;
+}
+
+/* === Formulario === */
+input, select {
+    background-color: #222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 6px 10px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #64b5f6;
+}
+
+/* === Alertas === */
+.alert {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.alert-error {
+    background-color: #ff44441a;
+    color: #ff7777;
+    border: 1px solid #ff4444;
+}
+
+.alert-success {
+    background-color: #00c8531a;
+    color: #69f0ae;
+    border: 1px solid #00e676;
+}
+
+.alert-warning {
+    background-color: #ffb3001a;
+    color: #ffd54f;
+    border: 1px solid #ffca28;
+}
+
+/* === Pie de página === */
+footer {
+    background-color: #1f1f1f;
+    color: #b0b0b0;
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid #333;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: 14px;
+}
+
+/* === Animaciones sutiles === */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.alert, .card {
+    animation: fadeIn 0.3s ease;
+}

@@ -1,34 +1,26 @@
 [
     {
         "id": 1,
-        "nombre": "CPU Virtual",
-        "abreviatura": "vCPU",
-        "metrica": "Unidades",
-        "tipo": "Hardware",
-        "valor_x_hora": 1.2
+        "nombre": "Memoria de Acceso Aleatorio",
+        "abreviatura": "RAM",
+        "metrica": "Gb",
+        "tipo": "HARDWARE",
+        "valor_x_hora": 40.0
     },
     {
         "id": 2,
-        "nombre": "Memoria RAM",
-        "abreviatura": "RAM",
-        "metrica": "GiB",
-        "tipo": "Hardware",
-        "valor_x_hora": 0.75
+        "nombre": "Unidad Central de Procesamiento",
+        "abreviatura": "CPU",
+        "metrica": "Núcleos",
+        "tipo": "HARDWARE",
+        "valor_x_hora": 50.0
     },
     {
         "id": 3,
-        "nombre": "Disco SSD",
+        "nombre": "Disco Duro Sólido",
         "abreviatura": "SSD",
-        "metrica": "GB",
-        "tipo": "Hardware",
-        "valor_x_hora": 0.25
-    },
-    {
-        "id": 4,
-        "nombre": "Licencia Linux",
-        "abreviatura": "OS-LNX",
-        "metrica": "Instancia",
-        "tipo": "Software",
-        "valor_x_hora": 0.1
+        "metrica": "Gb",
+        "tipo": "HARDWARE",
+        "valor_x_hora": 30.0
     }
 ]

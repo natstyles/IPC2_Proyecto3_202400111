@@ -62,3 +62,19 @@ def cargar_configuracion(request):
         else:
             messages.error(request, "No se seleccionó ningún archivo.")
     return render(request, 'core/cargar_configuracion.html')
+
+def ayuda(request):
+    return render(request, 'core/ayuda.html')
+
+def ayuda_estudiante(request):
+    info = {
+        "nombre": "Richard Steven Arizandieta Yol",
+        "carnet": "202400111",
+        "curso": "Introducción a Programación y Computación 2",
+        "seccion": "N",
+        "correo": "3817207210101@ingenieria.usac.edu.gt"
+    }
+    return render(request, 'core/ayuda_estudiante.html', {"info": info})
+
+def ayuda_documentacion(request):
+    return render(request, 'core/ayuda_documentacion.html')

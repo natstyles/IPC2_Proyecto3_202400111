@@ -1,20 +1,11 @@
 [
     {
         "id": 1,
-        "nombre": "Ana Torres",
-        "usuario": "ana.t",
-        "clave": "ana2025",
-        "direccion": "Zona 9, Ciudad de Guatemala",
-        "correo": "ana@devcloud.com",
-        "nit": "778899-0"
-    },
-    {
-        "id": 2,
-        "nombre": "Pedro Gómez",
-        "usuario": "pgomez",
-        "clave": "pgomez2025",
-        "direccion": "Zona 14, Ciudad de Guatemala",
-        "correo": "pedro@empresa.com",
-        "nit": "991122-1"
+        "nombre": "ipc",
+        "usuario": "prueba",
+        "clave": "proyecto",
+        "direccion": "Direccion del cliente",
+        "correo": "eMailCliente",
+        "nit": "32644-5"
     }
 ]

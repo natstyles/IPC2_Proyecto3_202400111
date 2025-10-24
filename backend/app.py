@@ -8,7 +8,7 @@ import json, os
 from xml.etree import ElementTree as ET
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import io
+import io, re
 from datetime import datetime
 
 app = Flask(__name__)
@@ -152,7 +152,7 @@ def cargar_configuracion():
                 "valor_x_hora": float(elem.findtext("valorXhora", 0))
             }
             if recurso_id == 0:
-                print("⚠️  Recurso ignorado por ID inválido")
+                print("Recurso ignorado por ID inválido")
                 continue
 
             if recurso_id in idx_recursos:
@@ -166,7 +166,7 @@ def cargar_configuracion():
                 nuevos_recursos += 1
 
         guardar_datos(RECURSOS_FILE, recursos)
-        print(f"✅ Recursos -> nuevos: {nuevos_recursos}, actualizados: {recursos_actualizados}")
+        print(f"Recursos -> nuevos: {nuevos_recursos}, actualizados: {recursos_actualizados}")
 
     # ---------------------- CATEGORÍAS y CONFIGURACIONES (upsert) ----------------------
     lista_categorias = find_child(root, "listacategorias")
@@ -283,23 +283,67 @@ def cargar_configuracion():
             # Instancias del cliente (upsert por id)
             lista_instancias = find_child(cli, "listainstancias")
             if lista_instancias is not None:
+                import re
+                from datetime import datetime
+
+                def extraer_fecha(texto):
+                    if not texto:
+                        return "--"
+                    patron = r"\b\d{2}/\d{2}/\d{4}\b"
+                    match = re.search(patron, texto)
+                    if match:
+                        return match.group(0)
+                    return "--"
+
                 for inst in lista_instancias:
                     if tag_name(inst) != "instancia":
                         continue
+
                     # id de instancia
                     inst_id_raw = inst.get("id")
                     inst_id = int(inst_id_raw) if inst_id_raw and str(inst_id_raw).isdigit() else (max([i["id"] for i in instancias], default=0) + 1)
 
+                    # Extraer campos de fecha y limpiar
+                    fecha_inicio_raw = (inst.findtext("fechaInicio") or "").strip()
+                    fecha_final_raw = (inst.findtext("fechaFinal") or "").strip()
+                    fecha_inicio = extraer_fecha(fecha_inicio_raw)
+                    fecha_final = extraer_fecha(fecha_final_raw)
+
+                    # Calcular horas si ambas fechas son válidas
+                    horas = 0.0
+                    if fecha_inicio != "--" and fecha_final != "--":
+                        try:
+                            inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+                            fin = datetime.strptime(fecha_final, "%d/%m/%Y")
+                            diff = fin - inicio
+                            horas = round(diff.total_seconds() / 3600, 2)
+                        except Exception as e:
+                            print(f"⚠ Error calculando horas para instancia {inst_id}: {e}")
+                            horas = 0.0
+
+                    # Buscar la configuración asociada para calcular el costo total
+                    configuracion_id = int(inst.findtext("idConfiguracion", 0))
+                    configuracion = next((cfg for cfg in configuraciones if cfg["id"] == configuracion_id), None)
+
+                    costo_total = 0.0
+                    if configuracion and horas > 0:
+                        for r_conf in configuracion.get("recursos", []):
+                            recurso = next((r for r in recursos if r["id"] == r_conf["id_recurso"]), None)
+                            if recurso:
+                                costo_total += float(recurso["valor_x_hora"]) * float(r_conf["cantidad"]) * horas
+                        costo_total = round(costo_total, 2)
+
+                    # Crear estructura final
                     inst_data = {
                         "id": inst_id,
                         "cliente_id": cliente_id,
-                        "configuracion_id": int(inst.findtext("idConfiguracion", 0)),
+                        "configuracion_id": configuracion_id,
                         "nombre": (inst.findtext("nombre") or "").strip(),
-                        "fecha_inicio": (inst.findtext("fechaInicio") or "").strip(),
+                        "fecha_inicio": fecha_inicio,
                         "estado": (inst.findtext("estado") or "").strip(),
-                        "fecha_final": (inst.findtext("fechaFinal") or "").strip(),
-                        "horas": 0.0 if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("horas", 0.0),
-                        "costo_total": 0.0 if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("costo_total", 0.0),
+                        "fecha_final": fecha_final,
+                        "horas": horas,
+                        "costo_total": costo_total,
                         "recurso_id": None if idx_instancias.get(inst_id) is None else idx_instancias[inst_id].get("recurso_id")
                     }
 
@@ -536,7 +580,7 @@ def crear_instancia():
         "configuracion_id": configuracion["id"],
         "nombre": configuracion["nombre"],  # Nombre igual al de la configuración
         "fecha_inicio": datetime.now().strftime("%d/%m/%Y") if not fecha_inicio else datetime.strptime(fecha_inicio, "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y"),
-        "estado": "Vigente",
+        "estado": "VIGENTE",
         "fecha_final": "--" if not fecha_final else datetime.strptime(fecha_final, "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y"),
         "horas": horas,
         "costo_total": round(costo_total, 2),
@@ -555,7 +599,7 @@ def crear_instancia():
 def cancelar_instancia(id):
     instancia = buscar_por_id(instancias, id)
     if instancia:
-        instancia["estado"] = "Cancelada"
+        instancia["estado"] = "CANCELADA"
         guardar_datos(INSTANCIAS_FILE, instancias)
         return jsonify(instancia)
     return jsonify({"error": "Instancia no encontrada"}), 404
@@ -681,7 +725,7 @@ def generar_facturas():
 
         # Buscar instancias vigentes o canceladas
         for instancia in instancias:
-            if instancia["cliente_id"] == cliente["id"] and instancia["estado"] in ["Vigente", "Cancelada"]:
+            if instancia["cliente_id"] == cliente["id"] and instancia["estado"] in ["VIGENTE", "CANCELADA"]:
                 configuracion = next((cfg for cfg in configuraciones if cfg["id"] == instancia["configuracion_id"]), None)
                 if not configuracion:
                     continue
@@ -753,7 +797,7 @@ def obtener_facturas():
 
     # Recalcular todas las facturas desde instancias vigentes o canceladas
     for instancia in instancias:
-        if instancia["estado"] not in ["Vigente", "Cancelada"]:
+        if instancia["estado"] not in ["VIGENTE", "CANCELADA"]:
             continue
 
         cliente = next((c for c in clientes if c["id"] == instancia["cliente_id"]), None)

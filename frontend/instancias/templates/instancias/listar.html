@@ -26,7 +26,7 @@
             <td>Q {{ i.costo_total }}</td>
             <td>{{ i.estado }}</td>
             <td>
-                {% if i.estado == "Vigente" %}
+                {% if i.estado == "VIGENTE" %}
                     <a href="/instancias/cancelar/{{ i.id }}">Cancelar</a>
                 {% else %}
                     —

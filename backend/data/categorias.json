@@ -1,14 +1,8 @@
 [
     {
         "id": 1,
-        "nombre": "Desarrollo",
-        "descripcion": "Configuraciones ligeras para entornos de prueba",
-        "carga_trabajo": "Baja"
-    },
-    {
-        "id": 2,
-        "nombre": "Producción",
-        "descripcion": "Instancias de alto rendimiento para servicios en línea",
+        "nombre": "Categoria 1",
+        "descripcion": "Configuraciones de alta carga",
         "carga_trabajo": "Alta"
     }
 ]

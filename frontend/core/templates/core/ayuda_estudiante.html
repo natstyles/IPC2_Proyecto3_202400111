@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Información del Estudiante{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin:auto;">
+    <h2>Información del Estudiante</h2>
+    <ul style="list-style:none; padding:0;">
+        <li><strong>Nombre:</strong> {{ info.nombre }}</li>
+        <li><strong>Carnet:</strong> {{ info.carnet }}</li>
+        <li><strong>Curso:</strong> {{ info.curso }}</li>
+        <li><strong>Sección:</strong> {{ info.seccion }}</li>
+        <li><strong>Correo:</strong> {{ info.correo }}</li>
+    </ul>
+    <a href="{% url 'ayuda' %}" class="btn">Volver a Centro de Ayuda</a>
+</div>
+{% endblock %}

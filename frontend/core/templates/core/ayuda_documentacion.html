@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Documentación del Programa{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin:auto;">
+    <h2>Documentación del Programa</h2>
+    <p>Este sistema fue desarrollado como parte del curso de Introducción a Programación y Computación 2.</p>
+
+    <h3>Descripción</h3>
+    <p>
+        El programa gestiona clientes, recursos, configuraciones, instancias y facturación
+        para una empresa tecnológica. Permite importar datos desde archivos XML,
+        calcular costos por horas de uso y generar reportes en PDF o XML.
+    </p>
+
+    <h3>Características principales</h3>
+    <ul>
+        <li>Gestión de clientes y recursos</li>
+        <li>Importación de configuraciones desde XML</li>
+        <li>Cálculo automático de costos y horas</li>
+        <li>Generación de facturas en PDF y XML</li>
+        <li>Interfaz con diseño oscuro y moderno</li>
+    </ul>
+    <br>
+    <center>
+        <a href="https://github.com/natstyles/IPC2_Proyecto3_202400111.git">Ver repositorio del proyecto (Github)</a>
+    </center>
+    <br>
+    <a href="{% url 'ayuda' %}" class="btn">Volver a Centro de Ayudar</a>
+</div>
+{% endblock %}

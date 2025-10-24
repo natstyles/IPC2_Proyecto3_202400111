@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ayuda - Tecnologías Chapinas S.A.{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: auto;">
+    <h2 style="text-align:center;">Centro de Ayuda</h2>
+    <p style="text-align:center; color:#ccc;">Selecciona una opción para más información.</p>
+
+    <div style="display:flex; justify-content:space-around; margin-top:30px;">
+        <a href="{% url 'ayuda_estudiante' %}" class="btn">Información del Estudiante</a>
+        <a href="{% url 'ayuda_documentacion' %}" class="btn">Documentación del Programa</a>
+    </div>
+</div>
+{% endblock %}
